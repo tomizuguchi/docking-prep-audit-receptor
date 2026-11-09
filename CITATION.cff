@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "この寄託物を使った場合は、下の形で引用してください。"
+title: "Scripts and measurements for an audit of receptor preparation in molecular docking"
+abstract: >-
+  Scripts and complete measurement tables for an audit of the receptor
+  preparation steps that precede molecular docking, on a resolution-stratified
+  sample of 100 single-chain protein crystal structures from the RCSB Protein
+  Data Bank. Covers the order in which heteroatoms are removed, the choice
+  between PDB2PQR and Meeko, Meeko's bad-residue flag, and the default altloc
+  setting, together with the resulting titration states, tool disagreements
+  and surface electrostatic potentials.
+type: dataset
+license: MIT
+license-url: "https://opensource.org/licenses/MIT"
+version: "1.0.0"
+date-released: "2026-11-09"
+
+authors:
+  - family-names: "Mizuguchi"
+    given-names: "Tomoko"
+    affiliation: "Faculty of Materials Science and Engineering, Kyoto Institute of Technology"
+    orcid: "https://orcid.org/0000-0001-9780-765X"
+    email: "mizuguti@kit.ac.jp"
+
+keywords:
+  - molecular docking
+  - receptor preparation
+  - protonation state
+  - electrostatic potential
+  - PDB2PQR
+  - Meeko
+  - reproducibility
+
+# ---------------------------------------------------------------------------
+# 【要判断】Zenodo で DOI を取ったら identifiers に足すこと。
+# concept DOI（版をまたぐもの）と、その版の DOI の両方を書ける。
+# ---------------------------------------------------------------------------
+# identifiers:
+#   - type: doi
+#     value: "10.5281/zenodo.XXXXXXX"
+#     description: "この版の DOI"
+#   - type: doi
+#     value: "10.5281/zenodo.YYYYYYY"
+#     description: "全ての版を指す concept DOI"
+
+# ---------------------------------------------------------------------------
+# 【要判断】論文が出たら preferred-citation をその論文にすること。
+# 現状はこの寄託物自体を指している。
+# ---------------------------------------------------------------------------
+
+notes: >-
+  ソフトウェア（scripts_receptor/ の 14 本）は MIT License。データと文章
+  （data_receptor/, README.md, environment.md）は CC BY 4.0。LICENSE と
+  LICENSE-DATA を見ること。配位子側（部分電荷の割り当て）の監査は別の
+  寄託物である。

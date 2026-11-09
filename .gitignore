@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+._*
+.DS_Store
+*.bak
+*.swp
+.venv/
+venv/
+
+# 再現で作られる作業ディレクトリ（寄託しない。sha256 だけ data_receptor/ にある）
+/full100/
+/in_hetall/
+/in_nowat/
+/recept/
+/pqr_hetall/
+/pqr_nowat/
+/pqr100r/
+/meekoA/
+/meekoA_noa/
+/meekoB/
+/meeko_nowat/

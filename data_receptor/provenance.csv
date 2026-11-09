@@ -1,0 +1,14 @@
+dir,role,input_dir,tool,verified,note
+full100,source,-,RCSB fetch,-,取得したままの PDB 100 本。通信のある計算機で取得した。ディレクトリには macOS の付随ファイル(._*)が 104 件中 4 件混ざる
+in_hetall,input,full100,make_inputs.py,make_inputs.py で byte 一致(100本),重原子 + HETATM 全部（配位子 + 水）
+in_nowat,input,full100,make_inputs.py,make_inputs.py で byte 一致(100本),重原子 + 水以外の HETATM（水だけ除去）
+recept,input,full100,make_inputs.py,make_inputs.py で byte 一致(100本),重原子のみ（水も配位子も除去）
+pqr_hetall,output,in_hetall,PDB2PQR 3.8.0,再実行で md5 一致(6本),pqr に水が残る
+pqr_nowat,output,in_nowat,PDB2PQR 3.8.0,再実行で md5 一致(6本),水なし。配位子は入力にあるが出力には書かれない
+pqr100r,output,recept,PDB2PQR 3.8.0,再実行で md5 一致(6本),水も配位子もなし。名前は full100 由来に見えるが入力は recept
+pqr100,output,in_hetall,PDB2PQR 3.8.0,再実行で md5 一致(5/6本),pqr_hetall と同一内容の先行ラン。97 本中 96 本。寄託しない
+meekoA,output,recept,Meeko,altloc A・recept 由来で確定,--default_altloc A -a。pdbqt 99 本 / log 100 本。取得試行 0 本。出力なし 1 本は通信以外の理由
+meekoA_noa,output,recept,Meeko,altloc A・recept 由来で確定,-a を付けない条件。meekoA と共通 61 本すべてが md5 一致。pdbqt 61 本 / log 100 本。取得試行 0 本
+meekoB,output,recept,Meeko,altloc B・recept 由来で確定,--default_altloc B -a。pdbqt 98 本 / log 100 本。取得試行 0 本。出力なし 2 本は通信以外の理由
+meeko_nowat,output,in_nowat,Meeko,HETATM を含む入力で確定,配位子あり条件。pdbqt 21 本 / log 100 本。うち 77 本は rcsb.org への CIF 取得が 403 で失敗（走行環境の通信制限）。通信のある環境での通過率ではない。水の有無は出力から区別できない（Meeko は水を落とす）。environment.md を見ること
+(なし),measurement,recept + meekoA + pqr100r,measure_field.py,解析解で検算（--selftest）,接触面の静電ポテンシャルの差。出力は data_receptor/field_diff.csv の 96 構造

@@ -1,0 +1,26 @@
+{
+  "title": "Scripts and measurements for an audit of receptor preparation in molecular docking",
+  "description": "<p>Scripts and complete measurement tables for an audit of the receptor preparation steps that precede molecular docking.</p><p>A resolution-stratified sample of 100 single-chain protein crystal structures from the RCSB PDB was prepared with PDB2PQR 3.8.0 under three heteroatom-removal conditions, and with Meeko 0.8.0 under two of them, with and without its bad-residue flag, and under both default-altloc settings. The deposit records the resulting titration states, the residues on which the two tools assign different formal charges, the effect of Meeko's bad-residue flag and of the default altloc setting, and the difference in electrostatic potential the two charge sets produce on the receptor contact surface.</p><p>Intermediate files (pqr and pdbqt, 205 MB) are not included; their sha256 checksums are, so that regenerated intermediates can be verified against the ones measured here. See README.md for the two-stage reproduction procedure and environment.md for the tool versions and the network conditions each measurement was made under.</p><p>The companion audit of partial-charge assignment for metallomacrocyclic ligands is a separate deposit.</p>",
+  "upload_type": "dataset",
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "molecular docking",
+    "receptor preparation",
+    "protonation state",
+    "electrostatic potential",
+    "PDB2PQR",
+    "Meeko",
+    "AutoDock",
+    "reproducibility"
+  ],
+  "creators": [
+    {
+      "name": "Mizuguchi, Tomoko",
+      "affiliation": "Faculty of Materials Science and Engineering, Kyoto Institute of Technology",
+      "orcid": "0000-0001-9780-765X"
+    }
+  ],
+  "_comment_related": "【要判断】論文が受理されたら related_identifiers に DOI を足すこと。relation は isSupplementTo。配位子側の寄託物ができたら isPartOf か references で相互に繋ぐこと。",
+  "_comment_license": "ソフトウェアは MIT、データと文章は CC BY 4.0。Zenodo のメタデータは 1 つしかライセンスを持てないので MIT を記載し、内訳は LICENSE と LICENSE-DATA に置いてある。"
+}

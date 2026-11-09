@@ -1,0 +1,28 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+SPDX-License-Identifier: CC-BY-4.0
+正式な条文: https://creativecommons.org/licenses/by/4.0/legalcode
+読みやすい要約: https://creativecommons.org/licenses/by/4.0/
+
+Copyright (c) 2026 Tomoko Mizuguchi
+
+適用範囲
+
+このライセンスはこの寄託物のデータと文章に適用される。
+
+  data_receptor/        受容体側の測定結果 CSV と sha256 の一覧
+  README.md
+  environment.md
+
+ソフトウェアは MIT License で、LICENSE を見ること。
+
+帰属表示
+
+再利用するときは、この寄託物と、それを記述した論文を引用すること。
+引用すべき形は CITATION.cff にある。
+
+第三者由来のものについて
+
+data_receptor/ の測定は RCSB Protein Data Bank から取得した 100 件の
+エントリに対して行った。識別子は data_receptor/full100_manifest.csv に
+ある。これらの一次資料それ自体の条件は提供元に従う。

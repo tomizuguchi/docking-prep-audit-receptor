@@ -1,0 +1,100 @@
+# この寄託物の linter 設定。
+#
+# ここに書いてある ignore は、どれも「見たうえで直さないと決めた」もの。
+# 理由を各行に書く。下の select で ignore を外して走らせると 456 件出るが、
+# その内訳を見ずに「linter に適合しない」とだけ言うのは正確でない。
+# 件数は 2026-11-09 時点の scripts_receptor/ 14 本に対するもの。
+#
+#   ruff check .                この設定で何も出ないこと
+#   ruff check . --statistics   内訳
+#
+# 自動修正できるものは適用済み。適用後に PDB2PQR と Meeko を 6 本ずつ
+# 走らせ直して md5 が一致すること、`measure_field.py --selftest` が通ること、
+# `make_inputs.py` が 300 ファイルで byte 一致することを確かめてある。
+
+line-length = 120
+target-version = "py310"
+
+[lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "C4", "S", "BLE", "EXE", "ISC", "PL", "RUF"]
+
+ignore = [
+  # --- 意図的な作り ---
+
+  "SIM115",   # open-file-with-context-handler（20 件）
+              # 大半は list(csv.DictReader(open(p))) の形で、読んで即閉じる。
+              # 書き込みの箇所は CPython の参照カウントで flush される形に
+              # 依存している。データを出したスクリプトを整形のために書き換える
+              # 不利益の方が大きいと判断して残した。CPython 3 以外で走らせる
+              # 場合はここを直すこと。
+
+  "BLE001",   # blind-except（8 件）
+              # 意図的。1 構造の失敗でラン全体を落とさないための握り。
+              # 理由はコード中のコメントに書いてある。
+
+  "PLW1510",  # subprocess-run-without-check（2 件）
+              # 意図的。mk_prepare_receptor は失敗しても rc=0 を返すので、
+              # returncode では判定せず出力の中身で判定している。
+
+  "S603",     # subprocess-without-shell-equals-true（2 件）
+              # 測定対象のツールを呼ぶ箇所。PATH 上の名前で呼ぶのがこの測定の
+              # 条件そのものなので、絶対パスに変えない。
+
+  "S310",     # suspicious-url-open-usage（3 件）RCSB からの取得。URL は固定。
+
+  "S311",     # pseudo-random-generators（1 件）fetch_strata.py:182 の標本抽出。
+              # 暗号用途ではない。シードを固定した抽出で、シードは
+              # data_receptor/full100_manifest.csv の seed 列に記録してある。
+
+  "S110",     # try-except-pass（1 件）profile_pdb.py:74。
+              # 読めない行を数えずに飛ばすのがこの集計の仕様。
+
+  "S101",     # assert（5 件）検算に使っている。-O で消えてよい性質のもの。
+
+  "PLC0415",  # import-outside-top-level（1 件）check_receptor.py:645。
+              # 重い import を使う分岐の中でだけ読む形。意図的。
+
+  "E741",     # ambiguous-variable-name（18 件）行を l と書いている。
+              # PDB の行を読むループが多く、別名にすると読みにくくなる。
+
+  # --- 誤検出 ---
+
+  "B023",     # function-uses-loop-variable（3 件）compare_tools.py:143。
+              # 直後の 145 行で、定義したその反復の中だけで呼んでいる。
+              # 関数を変数に入れて後から呼ぶ箇所は無いことを確認済み。
+
+  # --- 見たうえで残した書き方 ---
+  # いずれもデータを出したスクリプトなので、整形のために書き換えない。
+
+  "F841",     # unused-variable（1 件）compare_arms.py:43 の labels。
+              # 引数の順序を示すために置いてある。
+  "C416",     # 不要な内包（1 件）compare_arms.py:37。
+  "B007",     # unused-loop-control-variable（1 件）classify_titr.py:162。
+  "RUF007",   # itertools.pairwise を使え（1 件）profile_pdb.py:113。
+  "B905",     # zip-without-explicit-strict（1 件）同じ行。
+              # zip(nums, nums[1:]) は長さが違うのが前提なので strict は付けない。
+  "SIM105",   # suppressible-exception（3 件）contextlib.suppress を使え。
+  "RUF005",   # collection-literal-concatenation（4 件）a + [x] の書き方。
+  "C408",     # unnecessary-collection-call（4 件）dict(a=1) を使う書き方。
+  "C405",     # unnecessary-literal-set（2 件）
+  "PLR1714",  # repeated-equality-comparison（2 件）
+  "ISC004",   # implicit-string-concatenation-in-collection-literal（4 件）
+  "PLR0911",  # return が多い（1 件）check_receptor.py:638 の判定分岐。
+
+  # --- この寄託物の性格から外すもの ---
+
+  "RUF001", "RUF002", "RUF003",  # 全角文字（281 件）説明文が日本語。
+  "PLR2004",  # マジックナンバー（69 件）
+              # PDB の桁位置や元素半径など、定数化すると読めなくなる。
+  "PLR0912", "PLR0913", "PLR0915",  # 分岐・引数・文の数。測定スクリプトなので多い。
+  "C901",     # 循環的複雑度。同上。
+  "D",        # docstring の形式。日本語の説明文を書いているので当たらない。
+  "ANN",      # 型注釈。付けていない。
+  "T201",     # print。測定の進行をそのまま標準出力に出す作りなので使う。
+  "ERA001",   # コメントアウトされたコード。再実行の手順を残している箇所がある。
+  "INP001",   # __init__.py が無い。パッケージではなく単体スクリプト。
+  "PTH",      # pathlib を使え。os.path で書いてある。
+  "EM", "TRY003",  # 例外メッセージを変数に入れろ。
+  "COM812",   # 末尾カンマ。
+  "Q000",     # 引用符の統一。
+]
