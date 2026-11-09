@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""HETATM の有無で滴定状態がどう変わるかを残基ごとに比べる。
+"""Compare residue by residue how the titration state changes with and without HETATM.
 
   python3 compare_arms.py <pqr_hetall> <pqr_nowat> <pqr_none> [out.csv]
 
-3 条件はタンパクの ATOM 記録が完全に同じで、HETATM の有無だけが違う。
-水素は 3 条件すべてで落としてあるので、寄託水素の影響は入らない。
+The 3 conditions have exactly the same protein ATOM records and differ only in the presence of HETATM.
+Hydrogens are dropped in all 3 conditions, so deposited hydrogens have no influence.
 
-  hetall : 重原子 + HETATM 全部（配位子 + 水）
-  nowat  : 重原子 + 水以外の HETATM（水だけ除去）
-  none   : 重原子のみ（水も配位子も除去）
+  hetall : heavy atoms + all HETATM (ligand + water)
+  nowat  : heavy atoms + HETATM other than water (water removed only)
+  none   : heavy atoms only (both water and ligand removed)
 
-hetall -> nowat の差が水の除去、nowat -> none の差が配位子の除去による変化。
-状態の判定は classify_titr.py（残基名ではなく水素の有無）。
+The hetall -> nowat difference is the change from removing water, nowat -> none from removing ligands.
+States are classified by classify_titr.py (by the presence of hydrogens, not by residue name).
 """
 
 import collections
@@ -30,9 +30,9 @@ spec.loader.exec_module(ct)
 
 def states(pqr):
     res, seen, placed = ct.parse(pqr)
-    assert seen == placed, f"{pqr}: 滴定可能残基の行 {seen} 中 {placed} しか割り当てていない"
-    # 同じ原子名が二度来た残基は、別鎖の同番号残基が併合されたか altLoc。
-    # 黙って通すと片方の HD1 と他方の HE2 で架空の HIP(+1) が生まれる。
+    assert seen == placed, f"{pqr}: only {placed} of {seen} titratable residue lines were assigned"
+    # A residue with the same atom name twice means same-numbered residues of different chains were
+    # merged, or altLoc. Passing it silently creates a fictitious HIP(+1) from one HD1 and another HE2.
     dup = sum(1 for v in res.values() if v.get("dup"))
     return {k: v for k, v in ct.classify(res).items()}, dup
 
@@ -63,8 +63,8 @@ def main():
             st = [g[2] for g in got]
             if st[0] == st[1] == st[2]:
                 continue
-            # 鍵は (鎖, 残基番号, 残基名)。PDB2PQR は既定で鎖 ID を落とすので
-            # chain は空になることが多い。空のまま残し、後段が鎖の有無を知れるようにする。
+            # The key is (chain, residue number, residue name). PDB2PQR drops the chain ID by default,
+            # so chain is often empty. Leave it empty so later stages can tell whether a chain is present.
             rows.append(
                 {
                     "pdb_id": pid,
@@ -79,27 +79,30 @@ def main():
                 }
             )
     print(
-        f"比較した構造 {len(pids)} 本"
-        + (f"（残基キーが一致しない構造 {keymismatch} 本）" if keymismatch else "（残基キーは全構造で一致）")
+        f"Compared {len(pids)} structures"
+        + (f" ({keymismatch} structures with mismatched residue keys)" if keymismatch
+           else " (residue keys match in all structures)")
     )
     nochain = sum(1 for r in rows if not r["chain"])
     if nochain:
-        print(f"  注意: pqr に鎖 ID が無い行 {nochain}/{len(rows)}。PDB2PQR は既定で鎖を落とす（--keep-chain で残る）")
+        print(f"  Note: no chain ID in the pqr for {nochain}/{len(rows)} rows. "
+              "PDB2PQR drops chains by default (--keep-chain keeps them)")
     if dup_struct:
-        print(f"  !! 同じ原子名が二度来た残基を持つ構造 {len(dup_struct)} 本: {dup_struct[:5]}")
-        print("     別鎖の同番号残基が併合されている可能性がある。--keep-chain を付けて作り直すこと")
+        print(f"  !! {len(dup_struct)} structures have a residue with the same atom name twice: {dup_struct[:5]}")
+        print("     Same-numbered residues of different chains may have been merged. Rebuild with --keep-chain")
     else:
-        print("  原子名の重複なし。残基の併合は起きていない")
+        print("  No duplicate atom names. No residue merging occurred")
     tot = sum(len(states(os.path.join(dirs[2], p + ".pqr"))[0]) for p in pids)
-    print(f"滴定可能残基 {tot} 個のうち、3 条件で状態が揃わない残基 {len(rows)} 個 ({len(rows) / tot * 100:.2f}%)")
+    print(f"Of {tot} titratable residues, {len(rows)} do not share the same state across the 3 conditions "
+          f"({len(rows) / tot * 100:.2f}%)")
     if out and rows:
         with open(out, "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(rows[0]))
             w.writeheader()
             w.writerows(rows)
 
-    print("\n=== 変化の内訳（残基種ごと）===")
-    print(f"{'素の残基':<9}{'水の除去で変化':>16}{'配位子の除去で変化':>20}{'合計':>7}")
+    print("\n=== Breakdown of changes (by residue type) ===")
+    print(f"{'base':<9}{'water removal':>16}{'ligand removal':>20}{'total':>7}")
     byb = collections.defaultdict(lambda: [0, 0, 0])
     for r in rows:
         b = byb[r["base"]]
@@ -110,17 +113,17 @@ def main():
         print(f"{b:<9}{w:>16}{l:>20}{t:>7}")
     w_all = sum(r["water_removal_changed"] for r in rows)
     l_all = sum(r["ligand_removal_changed"] for r in rows)
-    print(f"{'計':<9}{w_all:>16}{l_all:>20}{len(rows):>7}")
+    print(f"{'total':<9}{w_all:>16}{l_all:>20}{len(rows):>7}")
     nstr = len({r["pdb_id"] for r in rows})
-    print(f"\n状態が変わる残基を 1 個以上持つ構造 {nstr}/{len(pids)} = {nstr / len(pids) * 100:.0f}%")
+    print(f"\nStructures with 1 or more residues that change state {nstr}/{len(pids)} = {nstr / len(pids) * 100:.0f}%")
 
-    print("\n=== どの状態からどの状態へ（上位）===")
+    print("\n=== From which state to which state (top) ===")
     tr = collections.Counter()
     for r in rows:
         if r["state_hetall"] != r["state_none"]:
             tr[(r["base"], r["state_hetall"], r["state_none"])] += 1
     for (b, a, z), n in tr.most_common(12):
-        print(f"  {b}: {a} -> {z}   {n} 残基")
+        print(f"  {b}: {a} -> {z}   {n} residues")
     if out:
         print(f"\n-> {out}")
 

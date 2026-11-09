@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""同じ入力ファイルから Meeko と PDB2PQR が作った受容体の電荷状態を比べる。
+"""Compare the charge states of the receptors that Meeko and PDB2PQR build from the same input file.
 
   python3 compare_tools.py <meeko_pdbqt_dir> <pqr_dir> [out.csv]
 
-入力は完全に同じ（recept/ の重原子のみ PDB）。違うのはツールだけ。
-PDB2PQR は PROPKA で滴定状態を予測する。Meeko はテンプレートから電荷を当てる。
-残基ごとの電荷の和を整数に丸めて形式電荷とし、両者を突き合わせる。
+The input is exactly the same (the heavy-atom-only PDB in recept/). Only the tool differs.
+PDB2PQR predicts titration states with PROPKA. Meeko assigns charges from templates.
+The per-residue charge sum is rounded to an integer to give the formal charge, and the two are compared.
 
-pdbqt は列固定（電荷 70-76、残基名 17-20、残基番号 22-27）。
-pqr は空白区切りだが座標が繋がると要素数が落ちるので要素数で弾かない。
-どちらも滴定可能残基を 1 個も落とさないことを assert で保証する。
+pdbqt is column-fixed (charge 70-76, residue name 17-20, residue number 22-27).
+pqr is whitespace-separated, but the field count drops when coordinates run together, so lines are not
+rejected by field count.
+An assert guarantees that neither side drops a single titratable residue.
 """
 
 import collections
@@ -19,7 +20,7 @@ import os
 import sys
 
 TITR = {"ASP", "GLU", "HIS", "CYS", "LYS", "TYR", "ARG"}
-# 標準状態（AMBER の荷電形）での形式電荷
+# Formal charge in the standard state (the charged form in AMBER)
 STD = {"ASP": -1, "GLU": -1, "HIS": 0, "CYS": 0, "LYS": 1, "TYR": 0, "ARG": 1}
 
 
@@ -38,12 +39,12 @@ def from_pdbqt(fn):
         except ValueError:
             continue
         placed += 1
-        # pdbqt は鎖 ID を持つ。鍵に入れておく。
+        # pdbqt has a chain ID. Keep it in the key.
         k = (l[21] if len(l) > 21 else " ", l[22:27].strip(), rn)
         e = res.setdefault(k, {"q": 0.0, "n": 0})
         e["q"] += q
         e["n"] += 1
-    assert seen == placed, f"{fn}: {seen} 行中 {placed} 行しか読めていない"
+    assert seen == placed, f"{fn}: only {placed} of {seen} lines were read"
     return res
 
 
@@ -65,8 +66,8 @@ def from_pqr(fn):
             float(f[-1])
         except ValueError:
             continue
-        # 鎖 ID は残基名と残基番号の間。PDB2PQR は既定で落とすが
-        # --keep-chain を付けると残る。あれば鍵に入れる。
+        # The chain ID sits between the residue name and the residue number. PDB2PQR drops it by
+        # default, but it stays when --keep-chain is given. Put it in the key when present.
         chain, num = "", ""
         for j in range(4, min(7, len(f))):
             if f[j].rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ").lstrip("-").isdigit():
@@ -79,19 +80,19 @@ def from_pqr(fn):
         placed += 1
         e = res.setdefault((chain, num, rn), {"q": 0.0, "n": 0, "at": set(), "dup": 0})
         if f[2] in e["at"]:
-            e["dup"] += 1  # 別鎖の同番号残基の併合、または altLoc
+            e["dup"] += 1  # merge of same-numbered residues from different chains, or altLoc
         e["at"].add(f[2])
         e["q"] += q
         e["n"] += 1
-    assert seen == placed, f"{fn}: {seen} 行中 {placed} 行しか読めていない"
+    assert seen == placed, f"{fn}: only {placed} of {seen} lines were read"
     return res
 
 
 def termini(pqrfile):
-    """末端残基を原子名で特定する。残基番号の最大最小では取り落とす
-    （7INV の ARG309 は OXT を持つ C 末端だが番号は最大ではない）。
-    C 末は OXT、N 末は H1/H2/H3 を持つ。末端は電荷和が交絡する:
-    荷電 ARG +1 と末端カルボキシラート -1 で和が 0 になり中性に見える。"""
+    """Identify terminal residues by atom name. The maximum and minimum residue number miss some
+    (ARG309 of 7INV is a C terminus carrying OXT, but its number is not the maximum).
+    A C terminus carries OXT, an N terminus carries H1/H2/H3. Termini confound the charge sum:
+    a charged ARG +1 and a terminal carboxylate -1 sum to 0 and look neutral."""
     term = set()
     for l in open(pqrfile, errors="replace"):
         if not l.startswith(("ATOM", "HETATM")):
@@ -122,9 +123,9 @@ def main():
         M = from_pdbqt(os.path.join(mdir, pid + ".pdbqt"))
         P = from_pqr(os.path.join(pdir, pid + ".pqr"))
         term = termini(os.path.join(pdir, pid + ".pqr"))
-        # pdbqt は鎖を持つが pqr は PDB2PQR が既定で落とす。両方が鎖を持つ
-        # ときだけ鎖込みで突き合わせ、片方が持たないときは鎖を外して合わせる。
-        # 鎖を外す場合、同じ残基番号が複数の鎖にあると曖昧になるので検出する。
+        # pdbqt carries chains, but PDB2PQR drops them from pqr by default. Match with the chain
+        # only when both sides carry chains; when one side does not, drop the chain before matching.
+        # When the chain is dropped, the same residue number in several chains is ambiguous, so detect it.
         p_has_chain = any(k[0] for k in P)
         m_has_chain = any(k[0] for k in M)
         use_chain = p_has_chain and m_has_chain
@@ -175,36 +176,42 @@ def main():
                 "n_disagree": sum(1 for k in common if round(Mx[k]["q"]) != round(Px[k]["q"])),
             }
         )
-    print(f"比較した構造 {len(pids)} 本（入力ファイルは同一、ツールだけが違う）")
-    print(f"末端残基 {n_excl} 個を除外（電荷和が交絡するため）")
+    print(f"{len(pids)} structures compared (the input files are identical, only the tool differs)")
+    print(f"{n_excl} terminal residues excluded (the charge sum is confounded)")
     if n_dup:
-        print(f"  !! pqr で同じ原子名が二度来た残基 {n_dup} 件。別鎖の同番号残基が併合されている可能性がある")
+        print(
+            f"  !! {n_dup} residues where the same atom name came twice in pqr. "
+            f"Same-numbered residues from different chains may have been merged"
+        )
     if n_ambiguous:
         print(
-            f"  !! 鎖を外して突き合わせた結果、同じ残基番号が複数の鎖にある例 "
-            f"{n_ambiguous} 件。--keep-chain で pqr を作り直すこと"
+            f"  !! after matching with the chain dropped, {n_ambiguous} cases where the same residue "
+            f"number is in several chains. Rebuild the pqr with --keep-chain"
         )
     else:
-        print("  鎖の曖昧さ・残基の併合ともになし")
+        print("  no chain ambiguity and no merged residues")
     print()
-    print("=== Meeko が付ける形式電荷の分布 ===")
+    print("=== Distribution of the formal charges Meeko assigns ===")
     for rn in sorted(mstate):
         tot = sum(mstate[rn].values())
         dist = ", ".join(f"{q:+d} x{n}" for q, n in sorted(mstate[rn].items()))
-        fixed = "  <- 全残基が同じ状態" if len(mstate[rn]) == 1 else ""
-        print(f"  {rn:<5} {tot:>5} 残基: {dist}{fixed}")
+        fixed = "  <- all residues in the same state" if len(mstate[rn]) == 1 else ""
+        print(f"  {rn:<5} {tot:>5} residues: {dist}{fixed}")
     tot = sum(sum(c.values()) for c in mstate.values())
     nd = sum(perstruct_i["n_disagree"] for perstruct_i in perstruct)
-    print(f"\n滴定可能残基 {tot} 個のうち、2 ツールで形式電荷が違う残基 {nd} 個 ({nd / tot * 100:.2f}%)")
-    print("\n=== 食い違いの内訳（Meeko の値 / PDB2PQR の値）===")
+    print(f"\n{nd} of {tot} titratable residues differ in formal charge between the two tools ({nd / tot * 100:.2f}%)")
+    print("\n=== Breakdown of the disagreements (Meeko value / PDB2PQR value) ===")
     for (rn, qm, qp), n in disagree.most_common(10):
-        print(f"  {rn}: Meeko {qm:+d} / PDB2PQR {qp:+d}   {n} 残基")
+        print(f"  {rn}: Meeko {qm:+d} / PDB2PQR {qp:+d}   {n} residues")
     moved = [r for r in perstruct if r["diff"]]
-    print("\n=== 受容体の正味電荷（滴定可能残基の和）===")
-    print(f"  2 ツールで差がある構造 {len(moved)}/{len(perstruct)} ({len(moved) / len(perstruct) * 100:.0f}%)")
+    print("\n=== Net charge of the receptor (sum over the titratable residues) ===")
+    print(
+        f"  {len(moved)}/{len(perstruct)} structures differ between the two tools "
+        f"({len(moved) / len(perstruct) * 100:.0f}%)"
+    )
     if moved:
-        print(f"  最大の差 {max(abs(r['diff']) for r in moved)} 単位")
-        print(f"\n{'構造':<7}{'Meeko':>8}{'PDB2PQR':>10}{'差':>7}{'食い違い残基':>14}")
+        print(f"  largest difference {max(abs(r['diff']) for r in moved)} units")
+        print(f"\n{'struct':<7}{'Meeko':>8}{'PDB2PQR':>10}{'diff':>7}{'disagreeing':>14}")
         for r in sorted(moved, key=lambda r: -abs(r["diff"]))[:12]:
             print(f"{r['pdb_id']:<7}{r['sum_meeko']:>8}{r['sum_pdb2pqr']:>10}{r['diff']:>+7}{r['n_disagree']:>14}")
     if out and rows:

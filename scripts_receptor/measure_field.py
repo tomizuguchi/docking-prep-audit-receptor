@@ -1,33 +1,38 @@
 #!/usr/bin/env python3
-"""準備ツールの違いが、受容体表面の静電ポテンシャルをどれだけ変えるかを測る。
+"""Measure how much the difference between preparation tools changes the receptor surface electrostatic potential.
 
-  python3 measure_field.py <入力pdbdir> <電荷dirA> <電荷dirB> [--out field_diff.csv]
-  python3 measure_field.py --selftest          （解析解との照合）
+  python3 measure_field.py <input pdbdir> <charge dirA> <charge dirB> [--out field_diff.csv]
+  python3 measure_field.py --selftest          (cross-check against the analytic solution)
 
-二つの準備ツールの出力は原子集合が違う（Meeko の pdbqt は非極性水素を併合し、
-PDB2PQR の pqr は水素を全部書く）。そのため「同じ原子の電荷を比べる」ことはできない。
-かわりに、どちらのツールもリガンドに見せることになる場そのものを比べる。
+The outputs of the two preparation tools have different atom sets (the Meeko pdbqt merges non-polar
+hydrogens, the PDB2PQR pqr writes every hydrogen). "Compare the charge of the same atom" is therefore
+impossible. Instead, compare the field itself, which is what each of the two tools ends up showing to
+the ligand.
 
-  - 点集合は入力 PDB の重原子から作る。どちらのツールの出力にも依存しないので、
-    残基を削除したツールでも同じ点で評価される（削除はその点での場の差として出る）。
-  - 場は各ファイルの電荷を全部使って計算する。そのツールが実際に書き出した
-    電荷セット（追加した水素を含む）が、ドッキングに渡るものだから。
+  - The point set is built from the heavy atoms of the input PDB. It does not depend on the output of
+    either tool, so a tool that deleted a residue is evaluated at the same points (the deletion shows
+    up as a difference in the field at those points).
+  - The field is computed using all of the charges in each file, because the charge set the tool
+    actually wrote out (including the hydrogens it added) is what is passed on to docking.
 
-方法
-  接触面   各重原子を中心に半径 (vdW 半径 + 1.7 Å) の球を置き、Fibonacci 球で
-           140 点/原子を散らす。他の原子の同じ半径の 0.92 倍より内側に入る点は捨てる。
-           接触してくる重原子の核が来る位置の近似。
-  vdW 半径 C 1.70 / N 1.55 / O 1.52 / S 1.80 / B 1.92 / H 1.20、その他 2.00
-  電位     V = 332.0637 × Σ(qᵢ/rᵢ)。単位は kcal/mol 毎単位電荷。r < 0.5 Å は 0.5 で打ち切る。
-  出力     二つの電荷セットの V の差の RMS と最大。各セットの Σq も併記する。
+Method
+  contact surface  Place a sphere of radius (vdW radius + 1.7 A) around each heavy atom and scatter
+                   140 points/atom over it with a Fibonacci sphere. Points that fall inside 0.92 times
+                   the same radius of another atom are discarded. This approximates the positions
+                   reached by the nucleus of an approaching heavy atom.
+  vdW radius       C 1.70 / N 1.55 / O 1.52 / S 1.80 / B 1.92 / H 1.20, 2.00 otherwise
+  potential        V = 332.0637 x sum(q_i/r_i). Units are kcal/mol per unit charge. r < 0.5 A is clamped to 0.5.
+  output           The RMS and the maximum of the difference in V between the two charge sets. The
+                   sum of q of each set is reported alongside.
 
-読める電荷ファイル
-  .pdbqt   電荷は 71-76 桁、原子型は 78-79 桁
-  .pqr     座標は PDB と同じ列位置（空白区切りにすると座標が繋がって要素数が落ちる
-           ファイルがある。実測で 9138 行）。電荷と半径は 55 桁以降を分割して取る。
+Readable charge files
+  .pdbqt   charge in columns 71-76, atom type in columns 78-79
+  .pqr     coordinates are at the same column positions as in the PDB (there are files where the
+           coordinates run together, so splitting on whitespace drops the field count; 9138 lines
+           by measurement). Charge and radius are taken by splitting from column 55 onwards.
 
-Fibonacci 球の作り方は実装によって違うので、ここで使ったものを書いておく。
-  y = 1 - 2(i+0.5)/N、r = sqrt(1-y²)、φ = i π (3-√5)、x = r cos φ、z = r sin φ
+Implementations differ in how they build a Fibonacci sphere, so the one used here is written out.
+  y = 1 - 2(i+0.5)/N, r = sqrt(1-y^2), phi = i pi (3-sqrt(5)), x = r cos phi, z = r sin phi
 """
 
 import argparse
@@ -39,31 +44,31 @@ import sys
 
 import numpy as np
 
-COUL = 332.0637  # kcal/mol·Å/e²
-PROBE = 1.7  # 接触してくる重原子の核までの上乗せ
-OCCL = 0.92  # 他原子の半径のこの倍より内側の点は捨てる
-NPTS = 140  # 原子あたりの点数
-RMIN = 0.5  # これより近い距離はこの値で打ち切る
+COUL = 332.0637  # kcal/mol*A/e^2
+PROBE = 1.7  # added on to reach the nucleus of an approaching heavy atom
+OCCL = 0.92  # points inside this multiple of another atom's radius are discarded
+NPTS = 140  # number of points per atom
+RMIN = 0.5  # distances closer than this are clamped to this value
 VDW = {"C": 1.70, "N": 1.55, "O": 1.52, "S": 1.80, "B": 1.92, "H": 1.20}
 VDW_DEFAULT = 2.00
-MAXEL = 30_000_000  # 一度に確保する距離行列の要素数の上限（約 240 MB）
+MAXEL = 30_000_000  # upper bound on the element count of the distance matrix allocated at once (about 240 MB)
 
 
 def chunk_for(n_atoms):
-    """原子数に応じて一度に処理する点の数を決める。
+    """Decide how many points to process at once according to the number of atoms.
 
-    点×原子の 2 次元行列しか作らないので、要素数を MAXEL で抑える。
-    3 次元の中間配列（点×原子×3）を作る実装では、重原子 7671・pqr 15440 原子の
-    構造で 7.4 GB を要求して落ちた。
+    Only the 2-dimensional points x atoms matrix is built, so the element count is held down by MAXEL.
+    An implementation that builds a 3-dimensional intermediate array (points x atoms x 3) asked for
+    7.4 GB and died on a structure with 7671 heavy atoms and 15440 pqr atoms.
     """
     return max(256, int(MAXEL // max(1, n_atoms)))
 
 
 def _dist2(p, a, pn, an):
-    """|p-a|² を 2 次元のまま作る。r² = |p|² + |a|² - 2p·a。"""
+    """Build |p-a|^2 while staying 2-dimensional. r^2 = |p|^2 + |a|^2 - 2p.a."""
     d2 = pn[:, None] + an[None, :]
     d2 -= 2.0 * (p @ a.T)
-    np.maximum(d2, 0.0, out=d2)  # 丸めで負になることがある
+    np.maximum(d2, 0.0, out=d2)  # rounding can make this negative
     return d2
 
 
@@ -71,9 +76,9 @@ def radius(el):
     return VDW.get((el or "").strip().upper()[:1], VDW_DEFAULT)
 
 
-# ---------- 読み込み ----------
+# ---------- reading ----------
 def read_pdb_heavy(path):
-    """入力 PDB の重原子。座標と元素を返す。"""
+    """Heavy atoms of the input PDB. Returns coordinates and elements."""
     xyz, el = [], []
     for l in open(path, errors="replace"):
         if not l.startswith(("ATOM", "HETATM")):
@@ -104,7 +109,7 @@ def read_pdbqt(path):
 
 
 def read_pqr(path):
-    """座標は列位置で取る。電荷と半径は 55 桁以降を分割して取る。"""
+    """Coordinates are taken by column position. Charge and radius are taken by splitting from column 55 onwards."""
     xyz, q = [], []
     for l in open(path, errors="replace"):
         if not l.startswith(("ATOM", "HETATM")):
@@ -122,10 +127,10 @@ def read_charges(path):
         return read_pdbqt(path)
     if path.endswith(".pqr"):
         return read_pqr(path)
-    raise SystemExit(f"読めない拡張子: {path}")
+    raise SystemExit(f"unreadable extension: {path}")
 
 
-# ---------- 接触面 ----------
+# ---------- contact surface ----------
 def fibonacci(n):
     i = np.arange(n, dtype=float)
     y = 1.0 - 2.0 * (i + 0.5) / n
@@ -135,11 +140,11 @@ def fibonacci(n):
 
 
 def contact_points(xyz, els, npts=NPTS, probe=PROBE, occl=OCCL):
-    """各原子の球面に点を散らし、他原子に埋もれる点を捨てる。"""
+    """Scatter points over the sphere of each atom and discard the points buried in other atoms."""
     rad = np.asarray([radius(e) + probe for e in els], float)
     unit = fibonacci(npts)
     pts = (xyz[:, None, :] + rad[:, None, None] * unit[None, :, :]).reshape(-1, 3)
-    cut = (occl * rad) ** 2  # 原子ごとの打ち切り（二乗）
+    cut = (occl * rad) ** 2  # per-atom cutoff (squared)
     keep = np.ones(len(pts), bool)
     an = (xyz**2).sum(1)
     ch = chunk_for(len(xyz))
@@ -150,9 +155,9 @@ def contact_points(xyz, els, npts=NPTS, probe=PROBE, occl=OCCL):
     return pts[keep]
 
 
-# ---------- 電位 ----------
+# ---------- potential ----------
 def potential(pts, xyz, q):
-    """各点での V = COUL Σ qᵢ/rᵢ。"""
+    """V = COUL sum(q_i/r_i) at each point."""
     nz = q != 0.0
     xyz, q = xyz[nz], q[nz]
     out = np.empty(len(pts), float)
@@ -166,7 +171,7 @@ def potential(pts, xyz, q):
     return out
 
 
-# ---------- 検算 ----------
+# ---------- cross-check ----------
 def selftest():
     ok = True
 
@@ -174,40 +179,40 @@ def selftest():
         nonlocal ok
         good = abs(got - want) <= tol
         ok &= good
-        print(f"  {'OK ' if good else 'NG '} {name}: {got:.6f}（期待 {want:.6f}）")
+        print(f"  {'OK ' if good else 'NG '} {name}: {got:.6f} (expected {want:.6f})")
 
-    # 1 点電荷。1 点だけを置いて解析解と比べる
+    # 1 point charge. Place a single point and compare with the analytic solution
     pts = np.array([[10.0, 0.0, 0.0]])
-    chk("点電荷 +1 を 10 Å 先から", potential(pts, np.zeros((1, 3)), np.array([1.0]))[0], COUL / 10.0)
-    # 打ち切り
+    chk("point charge +1 from 10 A away", potential(pts, np.zeros((1, 3)), np.array([1.0]))[0], COUL / 10.0)
+    # clamping
     chk(
-        "r=0.1 は 0.5 に打ち切る",
+        "r=0.1 is clamped to 0.5",
         potential(np.array([[0.1, 0.0, 0.0]]), np.zeros((1, 3)), np.array([1.0]))[0],
         COUL / 0.5,
     )
-    # 同じ電荷セットなら差は 0
+    # with the same charge set the difference is 0
     xyz = np.array([[0.0, 0.0, 0.0], [1.5, 0.0, 0.0]])
     q = np.array([0.3, -0.3])
     v = potential(pts, xyz, q)
-    chk("同じ電荷セットの差", float(np.abs(v - potential(pts, xyz, q)).max()), 0.0)
-    # 単極子を足すと遠方で COUL·Δq/r 増える
+    chk("difference for the same charge set", float(np.abs(v - potential(pts, xyz, q)).max()), 0.0)
+    # adding a monopole increases the far field by COUL*dq/r
     v2 = potential(np.array([[1000.0, 0.0, 0.0]]), xyz, q + np.array([1.0, 0.0]))
     v1 = potential(np.array([[1000.0, 0.0, 0.0]]), xyz, q)
-    chk("+1 を足すと 1000 Å 先で", float(v2[0] - v1[0]), COUL / 1000.0, tol=1e-4)
-    # 点集合: 孤立した 1 原子なら 140 点すべて残り、半径は vdW+probe
+    chk("adding +1, at 1000 A away", float(v2[0] - v1[0]), COUL / 1000.0, tol=1e-4)
+    # point set: for a single isolated atom all 140 points survive and the radius is vdW+probe
     p1 = contact_points(np.zeros((1, 3)), ["C"])
-    chk("孤立原子の点数", float(len(p1)), float(NPTS))
-    chk("その点の半径", float(np.linalg.norm(p1, axis=1).max()), VDW["C"] + PROBE, tol=1e-9)
-    # 遮蔽: 同じ位置に 2 原子を置くと、互いの 0.92 倍より内側…には入らない（半径が同じ）。
-    # 近接させると減る
+    chk("point count for an isolated atom", float(len(p1)), float(NPTS))
+    chk("radius of those points", float(np.linalg.norm(p1, axis=1).max()), VDW["C"] + PROBE, tol=1e-9)
+    # occlusion: with 2 atoms at the same position, neither falls inside 0.92 times the other's
+    # radius (the radii are equal). Bringing them close together reduces the count
     p2 = contact_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]), ["C", "C"])
-    print(f"  -- 1 Å 離した 2 原子の残存点 {len(p2)} / {2 * NPTS}（減ることの確認）")
+    print(f"  -- surviving points for 2 atoms 1 A apart {len(p2)} / {2 * NPTS} (check that the count drops)")
     ok &= len(p2) < 2 * NPTS
-    print("\n検算: " + ("すべて通った" if ok else "失敗あり"))
+    print("\ncross-check: " + ("all passed" if ok else "failures present"))
     return 0 if ok else 1
 
 
-# ---------- 本体 ----------
+# ---------- main ----------
 def find(d, pid):
     for ext in (".pdbqt", ".pqr"):
         p = os.path.join(d, pid + ext)
@@ -218,23 +223,23 @@ def find(d, pid):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("pdbdir", nargs="?", help="入力 PDB（重原子のみ）のディレクトリ")
-    ap.add_argument("dirA", nargs="?", help="電荷セット A のディレクトリ")
-    ap.add_argument("dirB", nargs="?", help="電荷セット B のディレクトリ")
+    ap.add_argument("pdbdir", nargs="?", help="directory of input PDBs (heavy atoms only)")
+    ap.add_argument("dirA", nargs="?", help="directory of charge set A")
+    ap.add_argument("dirB", nargs="?", help="directory of charge set B")
     ap.add_argument("--out", default="field_diff.csv")
-    ap.add_argument("--resume", action="store_true", help="既存の出力にある構造を飛ばして追記する")
+    ap.add_argument("--resume", action="store_true", help="skip structures already in the output and append")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
 
     if a.selftest:
         sys.exit(selftest())
     if not (a.pdbdir and a.dirA and a.dirB):
-        ap.error("pdbdir dirA dirB が必要（または --selftest）")
+        ap.error("pdbdir dirA dirB are required (or --selftest)")
 
     files = sorted(glob.glob(os.path.join(a.pdbdir, "*.pdb")))
     files = [f for f in files if not os.path.basename(f).startswith("._")]
     if not files:
-        sys.exit(f"{a.pdbdir} に *.pdb が無い")
+        sys.exit(f"no *.pdb in {a.pdbdir}")
 
     cols = [
         "pdb_id",
@@ -257,7 +262,7 @@ def main():
             for r in csv.DictReader(fh):
                 rows.append({k: r[k] for k in cols})
                 done.add(r["pdb_id"].upper())
-        print(f"既存の出力に {len(done)} 構造。これを飛ばして追記する")
+        print(f"{len(done)} structures in the existing output. Skip these and append")
 
     with open(a.out, "a" if done else "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols)
@@ -269,7 +274,7 @@ def main():
                 continue
             pa, pb = find(a.dirA, pid), find(a.dirB, pid)
             if not (pa and pb):
-                print(f"[{i:3}/{len(files)}] {pid} 片方が無いので飛ばす", flush=True)
+                print(f"[{i:3}/{len(files)}] {pid} one of the two is missing, so skip", flush=True)
                 continue
             xyz, els = read_pdb_heavy(f)
             pts = contact_points(xyz, els)
@@ -296,21 +301,21 @@ def main():
             w.writerow(rec)
             fh.flush()
             print(
-                f"[{i:3}/{len(files)}] {pid} 点 {len(pts):6d}  "
-                f"ΔV rms {rec['rms_dv']:8.3f}  max {rec['max_abs_dv']:9.3f}  "
-                f"Σq {rec['sum_q_a']:+.2f} / {rec['sum_q_b']:+.2f}",
+                f"[{i:3}/{len(files)}] {pid} points {len(pts):6d}  "
+                f"dV rms {rec['rms_dv']:8.3f}  max {rec['max_abs_dv']:9.3f}  "
+                f"sum_q {rec['sum_q_a']:+.2f} / {rec['sum_q_b']:+.2f}",
                 flush=True,
             )
 
     if rows:
         r = np.array([float(x["rms_dv"]) for x in rows])
         m = np.array([float(x["max_abs_dv"]) for x in rows])
-        print(f"\n{len(rows)} 構造")
+        print(f"\n{len(rows)} structures")
         print(
-            f"  ΔV の RMS: 中央値 {np.median(r):.2f}、四分位 {np.percentile(r, 25):.2f}"
-            f"–{np.percentile(r, 75):.2f}、範囲 {r.min():.2f}–{r.max():.2f} kcal/mol/e"
+            f"  RMS of dV: median {np.median(r):.2f}, quartiles {np.percentile(r, 25):.2f}"
+            f"-{np.percentile(r, 75):.2f}, range {r.min():.2f}-{r.max():.2f} kcal/mol/e"
         )
-        print(f"  ΔV の最大: 中央値 {np.median(m):.2f}、範囲 {m.min():.2f}–{m.max():.2f}")
+        print(f"  maximum of dV: median {np.median(m):.2f}, range {m.min():.2f}-{m.max():.2f}")
     print(f"\n-> {a.out}")
 
 

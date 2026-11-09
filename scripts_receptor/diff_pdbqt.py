@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""同じ構造から altLoc 設定だけを変えて作った 2 つの receptor pdbqt を比べる。
+"""Compare two receptor pdbqt files made from the same structure with only the altLoc setting changed.
 
   python3 diff_pdbqt.py <dirA> <dirB> [out.csv]
 
-落ちるか落ちないかではなく、両方通った構造で中身がどれだけ変わるかを測る。
-比べるのは原子数、電荷の総和、残基の出入り、対応づけた原子の電荷差、原子型。
+This measures not whether a run fails, but how much the contents change in structures that both
+settings got through. Compared: atom count, total charge, residues gained or lost, the charge
+difference of matched atoms, and atom types.
 
-pdbqt の列は PDB 準拠 + 電荷(70-76) + AutoDock 原子型(77-79)。
-列固定で読む。空白区切りは座標が繋がると壊れる（pqr で踏んだ）。
+The pdbqt columns are PDB conforming + charge (70-76) + AutoDock atom type (77-79).
+Read by fixed columns. Whitespace splitting breaks when coordinates run together (as hit with pqr).
 """
 
 import csv
@@ -17,7 +18,7 @@ import sys
 
 
 def read(fn):
-    """(残基名, 残基番号, 原子名) -> (電荷, 原子型) の辞書を返す。"""
+    """Return a dict (residue name, residue number, atom name) -> (charge, atom type)."""
     d = {}
     for l in open(fn, errors="replace"):
         if not l.startswith(("ATOM", "HETATM")):
@@ -68,7 +69,7 @@ def main():
             }
         )
     if not rows:
-        print("比較できる構造がありません")
+        print("No structures available for comparison")
         return
     if out:
         with open(out, "w", newline="") as fh:
@@ -78,17 +79,17 @@ def main():
 
     n = len(rows)
     same = sum(r["identical"] for r in rows)
-    print(f"両設定で pdbqt が出た構造 {n} 本")
-    print(f"  完全に同一 {same} 本、どこかが違う {n - same} 本")
-    print(f"  原子数が違う {sum(1 for r in rows if r['d_n_atom'])} 本")
-    print(f"  電荷の総和が違う {sum(1 for r in rows if abs(r['d_sumq']) > 1e-9)} 本")
-    print(f"  原子型が違う原子を含む {sum(1 for r in rows if r['n_type_diff'])} 本")
-    print(f"  残基の出入りがある {sum(1 for r in rows if r['res_only_A'] or r['res_only_B'])} 本")
+    print(f"{n} structures produced a pdbqt under both settings")
+    print(f"  completely identical {same}, different somewhere {n - same}")
+    print(f"  atom count differs {sum(1 for r in rows if r['d_n_atom'])}")
+    print(f"  total charge differs {sum(1 for r in rows if abs(r['d_sumq']) > 1e-9)}")
+    print(f"  contains an atom whose atom type differs {sum(1 for r in rows if r['n_type_diff'])}")
+    print(f"  residues gained or lost {sum(1 for r in rows if r['res_only_A'] or r['res_only_B'])}")
     diff = [r for r in rows if not r["identical"]]
     if diff:
         print(
-            f"\n{'構造':<7}{'原子 A':>7}{'原子 B':>7}{'Δ原子':>7}{'Σq A':>9}{'Σq B':>9}"
-            f"{'ΔΣq':>9}{'電荷が動いた原子':>17}{'max|Δq|':>9}{'型違い':>7}"
+            f"\n{'struct':<7}{'atoms A':>7}{'atoms B':>7}{'d atoms':>7}{'sumq A':>9}{'sumq B':>9}"
+            f"{'d sumq':>9}{'charge moved':>17}{'max|dq|':>9}{'types':>7}"
         )
         for r in sorted(diff, key=lambda r: -abs(r["d_sumq"])):
             print(
@@ -97,7 +98,7 @@ def main():
                 f"{r['n_charge_moved']:>17}{r['max_abs_dq']:>9.3f}{r['n_type_diff']:>7}"
             )
     if out:
-        print(f"\n→ {out}")
+        print(f"\n-> {out}")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
-# 準備段階の中間ファイルの sha256。
-# 寄託物からこれらを作り直したとき、同じものが得られたかを照合するためのもの。
-# 作り方は README の「再現の 2 段階」を見ること。
-# 生成日 2026-11-09 / 生成元 PDB2PQR 3.8.0 + propka 3.5.1, Meeko 0.8.0
+# sha256 of the intermediate files produced by the preparation stage.
+# Use these to check whether files you rebuild from this deposit are the same ones.
+# For how to rebuild them, see "Reproducing, in two stages" in the README.
+# Generated 2026-11-09 by PDB2PQR 3.8.0 + propka 3.5.1, and Meeko 0.8.0
 
 511932b0fed88adc506d45087732b3d8dd7d0c3032a8c2850ae8b31388822886  recept/1BGP.pdb
 2da2739a7467876c8134447680f732b771f08d37bde6f17ff45302ed3a6fda25  recept/1DP8.pdb

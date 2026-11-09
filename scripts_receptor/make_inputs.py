@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
-"""取得したままの PDB から、準備の 3 条件の入力を作る。
+"""Build the inputs for the 3 preparation conditions from the PDB files as downloaded.
 
   python3 make_inputs.py <srcdir> <outbase>
 
-`<srcdir>` に `*.pdb` を置く（`full100_manifest.csv` の 100 構造を RCSB から
-取得したもの）。`<outbase>` の下に 3 つのディレクトリができる。
+Put `*.pdb` in `<srcdir>` (the 100 structures of `full100_manifest.csv` as downloaded
+from RCSB). Three directories are created under `<outbase>`.
 
-  in_hetall/   重原子 + HETATM 全部（配位子 + 水）
-  in_nowat/    重原子 + 水以外の HETATM
-  recept/      重原子のみ（水も配位子も除去）
+  in_hetall/   heavy atoms + all HETATM (ligand + water)
+  in_nowat/    heavy atoms + HETATM other than water
+  recept/      heavy atoms only (both water and ligand removed)
 
-規則
-  ATOM と HETATM の行だけを残す。元素欄（77-78 桁）が H または D のものは落とす。
-  TER と END はそのまま残す。それ以外の行（HEADER, REMARK, ANISOU, CONECT など）は
-  落とす。altloc 指示子はそのまま残す。原子番号は書き換えない。
+Rules
+  Keep only the ATOM and HETATM lines. Drop those whose element column (columns 77-78) is H or D.
+  Keep TER and END as they are. Drop every other line (HEADER, REMARK, ANISOU, CONECT and so on).
+  Keep the altloc indicator as it is. Do not rewrite the atom numbering.
 
-  条件ごとの違いは HETATM の扱いだけ。
-    in_hetall  HETATM をすべて残す
-    in_nowat   残基名が HOH の HETATM を落とす
-    recept     HETATM をすべて落とす
+  The only difference between the conditions is the treatment of HETATM.
+    in_hetall  keep all HETATM
+    in_nowat   drop HETATM whose residue name is HOH
+    recept     drop all HETATM
 
-元素欄が空の行は、原子名（13-16 桁）の先頭の英字で判定する。PDB の原子名は
-元素記号が 2 文字のときだけ 13 桁目から始まるので、13 桁目が空白なら 14 桁目の
-英字を元素とみなす。
+For a line whose element column is empty, the element is decided from the leading alphabetic character
+of the atom name (columns 13-16). A PDB atom name starts at column 13 only when the element symbol has
+2 characters, so if column 13 is blank the alphabetic character in column 14 is taken as the element.
 """
 
 import argparse
@@ -41,7 +41,7 @@ ARMS = (
 
 
 def element_of(line):
-    """元素記号。77-78 桁が空なら原子名から拾う。"""
+    """Element symbol. If columns 77-78 are empty, take it from the atom name."""
     e = line[76:78].strip().upper()
     if e:
         return e
@@ -56,7 +56,7 @@ def is_hydrogen(line):
 
 
 def filter_lines(lines, het):
-    """het は 'all' | 'nowat' | 'none'。"""
+    """het is 'all' | 'nowat' | 'none'."""
     out = []
     for l in lines:
         rec = l[:6]
@@ -76,15 +76,15 @@ def filter_lines(lines, het):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("srcdir", help="取得したままの PDB が入ったディレクトリ")
-    ap.add_argument("outbase", help="3 つのディレクトリを作る場所")
+    ap.add_argument("srcdir", help="directory holding the PDB files as downloaded")
+    ap.add_argument("outbase", help="where the 3 directories are created")
     a = ap.parse_args()
 
     files = sorted(glob.glob(os.path.join(a.srcdir, "*.pdb")))
-    # macOS の付随ファイル（._*）は glob が拾わないが、念のため除く
+    # glob does not pick up the macOS companion files (._*), but exclude them just in case
     files = [f for f in files if not os.path.basename(f).startswith("._")]
     if not files:
-        sys.exit(f"{a.srcdir} に *.pdb が無い")
+        sys.exit(f"no *.pdb in {a.srcdir}")
 
     dirs = {}
     for name, _ in ARMS:
@@ -102,7 +102,7 @@ def main():
                 fh.writelines(out)
         n += 1
 
-    print(f"{n} 構造を 3 条件に展開した")
+    print(f"Expanded {n} structures into the 3 conditions")
     for name, _ in ARMS:
         print(f"  {dirs[name]}")
 

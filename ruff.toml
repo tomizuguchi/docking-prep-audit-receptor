@@ -1,16 +1,19 @@
-# この寄託物の linter 設定。
+# The linter configuration for this deposit.
 #
-# ここに書いてある ignore は、どれも「見たうえで直さないと決めた」もの。
-# 理由を各行に書く。下の select で ignore を外して走らせると 456 件出るが、
-# その内訳を見ずに「linter に適合しない」とだけ言うのは正確でない。
-# 件数は 2026-11-09 時点の scripts_receptor/ 14 本に対するもの。
+# Every rule in the ignore list below was looked at and left as it stands. The
+# reason is written against each one. With the ignore list removed, the select
+# list below reports 175 findings over the 14 scripts in scripts_receptor/;
+# saying only that the code "does not pass a linter" would not be accurate.
+# The counts are as of 2026-11-09.
 #
-#   ruff check .                この設定で何も出ないこと
-#   ruff check . --statistics   内訳
+#   ruff check .                nothing is reported under this configuration
+#   ruff check . --statistics   the breakdown
 #
-# 自動修正できるものは適用済み。適用後に PDB2PQR と Meeko を 6 本ずつ
-# 走らせ直して md5 が一致すること、`measure_field.py --selftest` が通ること、
-# `make_inputs.py` が 300 ファイルで byte 一致することを確かめてある。
+# The fixes ruff could apply automatically have been applied. After applying
+# them, PDB2PQR and Meeko were each re-run on 6 structures and the output was
+# md5-identical, make_inputs.py was rebuilt over all 300 files and was
+# byte-identical, measure_field.py --selftest passed, and the deposited
+# measurement tables were regenerated from the deposited scripts and compared.
 
 line-length = 120
 target-version = "py310"
@@ -19,82 +22,81 @@ target-version = "py310"
 select = ["E", "W", "F", "I", "UP", "B", "SIM", "C4", "S", "BLE", "EXE", "ISC", "PL", "RUF"]
 
 ignore = [
-  # --- 意図的な作り ---
+  # --- deliberate design ---
 
-  "SIM115",   # open-file-with-context-handler（20 件）
-              # 大半は list(csv.DictReader(open(p))) の形で、読んで即閉じる。
-              # 書き込みの箇所は CPython の参照カウントで flush される形に
-              # 依存している。データを出したスクリプトを整形のために書き換える
-              # 不利益の方が大きいと判断して残した。CPython 3 以外で走らせる
-              # 場合はここを直すこと。
+  "SIM115",   # open-file-with-context-handler (20)
+              # Most are of the form list(csv.DictReader(open(p))), which reads and closes at once.
+              # The writes rely on CPython's reference counting to flush. Rewriting scripts that
+              # produced deposited data, for the sake of style, costs more than it gains. Fix these
+              # before running under an implementation other than CPython 3.
 
-  "BLE001",   # blind-except（8 件）
-              # 意図的。1 構造の失敗でラン全体を落とさないための握り。
-              # 理由はコード中のコメントに書いてある。
+  "BLE001",   # blind-except (8)
+              # Deliberate: it stops one structure's failure from taking down the whole run.
+              # The reason is written in a comment at each site.
 
-  "PLW1510",  # subprocess-run-without-check（2 件）
-              # 意図的。mk_prepare_receptor は失敗しても rc=0 を返すので、
-              # returncode では判定せず出力の中身で判定している。
+  "PLW1510",  # subprocess-run-without-check (2)
+              # Deliberate: mk_prepare_receptor can return rc=0 on failure, so the decision is made
+              # from the content of the output rather than from returncode.
 
-  "S603",     # subprocess-without-shell-equals-true（2 件）
-              # 測定対象のツールを呼ぶ箇所。PATH 上の名前で呼ぶのがこの測定の
-              # 条件そのものなので、絶対パスに変えない。
+  "S603",     # subprocess-without-shell-equals-true (2)
+              # These calls invoke the tools under measurement. Calling them by their name on PATH is
+              # part of what is being measured, so they are not changed to absolute paths.
 
-  "S310",     # suspicious-url-open-usage（3 件）RCSB からの取得。URL は固定。
+  "S310",     # suspicious-url-open-usage (3) Fetching from RCSB. The URLs are fixed.
 
-  "S311",     # pseudo-random-generators（1 件）fetch_strata.py:182 の標本抽出。
-              # 暗号用途ではない。シードを固定した抽出で、シードは
-              # data_receptor/full100_manifest.csv の seed 列に記録してある。
+  "S311",     # pseudo-random-generators (1) fetch_strata.py:183, drawing the sample.
+              # Not a cryptographic use. The draw is seeded, and the seed is recorded in the
+              # seed column of data_receptor/full100_manifest.csv.
 
-  "S110",     # try-except-pass（1 件）profile_pdb.py:74。
-              # 読めない行を数えずに飛ばすのがこの集計の仕様。
+  "S110",     # try-except-pass (1) profile_pdb.py:74.
+              # Skipping an unparsable line without counting it is what this tally is specified to do.
 
-  "S101",     # assert（5 件）検算に使っている。-O で消えてよい性質のもの。
+  "S101",     # assert (5) Used for cross-checks. These may be removed by -O.
 
-  "PLC0415",  # import-outside-top-level（1 件）check_receptor.py:645。
-              # 重い import を使う分岐の中でだけ読む形。意図的。
+  "PLC0415",  # import-outside-top-level (1) check_receptor.py:648.
+              # A heavy import read only inside the branch that uses it. Deliberate.
 
-  "E741",     # ambiguous-variable-name（18 件）行を l と書いている。
-              # PDB の行を読むループが多く、別名にすると読みにくくなる。
+  "E741",     # ambiguous-variable-name (18) A line is named l.
+              # Many loops read PDB lines, and another name makes them harder to read.
 
-  # --- 誤検出 ---
+  # --- false positive ---
 
-  "B023",     # function-uses-loop-variable（3 件）compare_tools.py:143。
-              # 直後の 145 行で、定義したその反復の中だけで呼んでいる。
-              # 関数を変数に入れて後から呼ぶ箇所は無いことを確認済み。
+  "B023",     # function-uses-loop-variable (3) compare_tools.py:144.
+              # interm is called on line 146, inside the same iteration that defines it. There is no
+              # site that stores the function and calls it later; this was checked.
 
-  # --- 見たうえで残した書き方 ---
-  # いずれもデータを出したスクリプトなので、整形のために書き換えない。
+  # --- forms that were looked at and kept ---
+  # All of these are in scripts that produced deposited data, so they are not rewritten for style.
 
-  "F841",     # unused-variable（1 件）compare_arms.py:43 の labels。
-              # 引数の順序を示すために置いてある。
-  "C416",     # 不要な内包（1 件）compare_arms.py:37。
-  "B007",     # unused-loop-control-variable（1 件）classify_titr.py:162。
-  "RUF007",   # itertools.pairwise を使え（1 件）profile_pdb.py:113。
-  "B905",     # zip-without-explicit-strict（1 件）同じ行。
-              # zip(nums, nums[1:]) は長さが違うのが前提なので strict は付けない。
-  "SIM105",   # suppressible-exception（3 件）contextlib.suppress を使え。
-  "RUF005",   # collection-literal-concatenation（4 件）a + [x] の書き方。
-  "C408",     # unnecessary-collection-call（4 件）dict(a=1) を使う書き方。
-  "C405",     # unnecessary-literal-set（2 件）
-  "PLR1714",  # repeated-equality-comparison（2 件）
-  "ISC004",   # implicit-string-concatenation-in-collection-literal（4 件）
-  "PLR0911",  # return が多い（1 件）check_receptor.py:638 の判定分岐。
+  "F841",     # unused-variable (1) labels in compare_arms.py:43, which records the argument order.
+  "C416",     # unnecessary comprehension (1) compare_arms.py:37.
+  "B007",     # unused-loop-control-variable (1) classify_titr.py:165.
+  "RUF007",   # prefer itertools.pairwise (1) profile_pdb.py:113.
+  "B905",     # zip-without-explicit-strict (1) the same line.
+              # zip(nums, nums[1:]) relies on the lengths differing, so strict is not set.
+  "SIM105",   # suppressible-exception (3) use contextlib.suppress.
+  "RUF005",   # collection-literal-concatenation (4) the a + [x] form.
+  "C408",     # unnecessary-collection-call (4) the dict(a=1) form.
+  "C405",     # unnecessary-literal-set (2)
+  "PLR1714",  # repeated-equality-comparison (2)
+  "ISC004",   # implicit-string-concatenation-in-collection-literal (4)
+  "PLR0911",  # too many return statements (1) the decision branches in check_receptor.py:641.
 
-  # --- この寄託物の性格から外すもの ---
+  # --- excluded because of what this deposit is ---
 
-  "RUF001", "RUF002", "RUF003",  # 全角文字（281 件）説明文が日本語。
-  "PLR2004",  # マジックナンバー（69 件）
-              # PDB の桁位置や元素半径など、定数化すると読めなくなる。
-  "PLR0912", "PLR0913", "PLR0915",  # 分岐・引数・文の数。測定スクリプトなので多い。
-  "C901",     # 循環的複雑度。同上。
-  "D",        # docstring の形式。日本語の説明文を書いているので当たらない。
-  "ANN",      # 型注釈。付けていない。
-  "T201",     # print。測定の進行をそのまま標準出力に出す作りなので使う。
-  "ERA001",   # コメントアウトされたコード。再実行の手順を残している箇所がある。
-  "INP001",   # __init__.py が無い。パッケージではなく単体スクリプト。
-  "PTH",      # pathlib を使え。os.path で書いてある。
-  "EM", "TRY003",  # 例外メッセージを変数に入れろ。
-  "COM812",   # 末尾カンマ。
-  "Q000",     # 引用符の統一。
+  "PLR2004",  # magic-value-comparison (69)
+              # Column positions in PDB records, element radii and the like. Naming them as
+              # constants would make them harder to read against the format they come from.
+  "PLR0912", "PLR0913", "PLR0915",  # counts of branches, arguments and statements. These are
+                                    # measurement scripts, so the counts are high.
+  "C901",     # cyclomatic complexity. As above.
+  "D",        # docstring conventions. Not followed.
+  "ANN",      # type annotations. Not used.
+  "T201",     # print. The scripts are built to report progress on standard output.
+  "ERA001",   # commented-out code. Some sites keep the commands for re-running a step.
+  "INP001",   # no __init__.py. These are standalone scripts, not a package.
+  "PTH",      # use pathlib. Written with os.path.
+  "EM", "TRY003",  # move exception messages into variables.
+  "COM812",   # trailing commas.
+  "Q000",     # quote style.
 ]

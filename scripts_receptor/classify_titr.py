@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
-"""pqr の滴定可能残基の状態を、残基名ではなく水素の有無から決める。
+"""Decide the state of the titratable residues in a pqr from the presence of hydrogens, not from the residue name.
 
   python3 classify_titr.py <pqrdir> [out.csv]
 
-残基名を信用しない理由: PDB2PQR は中性リジンに LYN のパラメータを当てても
-名前を LYS のままにする（100 構造で 18/18、HSA 3 構造で 6/6）。
-名前で読むと中性リジンは 1 本も見えない。だから水素で読む。
+Why the residue name is not trusted: PDB2PQR leaves the name as LYS even when it assigns the LYN
+parameters to a neutral lysine (18/18 in the 100 structures, 6/6 in the 3 HSA structures).
+Read by name, not a single neutral lysine is visible. Hydrogens are read instead.
 
-判定（AMBER の水素命名）
-  ASP  HD2 あり        -> 中性(ASH)        なし -> 荷電(-1)
-  GLU  HE2 あり        -> 中性(GLH)        なし -> 荷電(-1)
-  HIS  HD1 と HE2 両方 -> HIP(+1)
-       HD1 のみ        -> HID(中性)        HE2 のみ -> HIE(中性)
-  CYS  HG あり         -> 中性チオール      なし -> SS 結合 か チオラート(-1)
-       SG-SG が 2.5 A 未満の相手を持てば SS 結合、なければチオラート
-  TYR  HH あり         -> 中性             なし -> チロシナート(-1)
-  LYS  HZ 3 本         -> 荷電(+1)         2 本 -> 中性(LYN)
-  ARG  NE/NH1/NH2 の H 5 本 -> 荷電(+1)    4 本 -> 中性(AR0)
-分類できなかった残基は捨てずに unknown として数え、必ず報告する。
+Decision (AMBER hydrogen naming)
+  ASP  HD2 present       -> neutral (ASH)    absent -> charged (-1)
+  GLU  HE2 present       -> neutral (GLH)    absent -> charged (-1)
+  HIS  both HD1 and HE2  -> HIP(+1)
+       HD1 only          -> HID (neutral)    HE2 only -> HIE (neutral)
+  CYS  HG present        -> neutral thiol    absent -> SS bond or thiolate (-1)
+       SS bond when it has a partner with SG-SG under 2.5 A, thiolate when it does not
+  TYR  HH present        -> neutral          absent -> tyrosinate (-1)
+  LYS  3 HZ              -> charged (+1)     2 -> neutral (LYN)
+  ARG  5 H on NE/NH1/NH2 -> charged (+1)     4 -> neutral (AR0)
+Residues that could not be classified are not thrown away; they are counted as unknown and always reported.
 
-パーサの注意: pqr は空白区切りだが座標が繋がると要素数が落ちる
-（6ZHF では ATOM 行の 67% が 9 要素）。要素数で行を弾いてはいけない。
-座標は列固定(30-54)で読む。滴定可能残基の ATOM 行を 1 本も落とさないことを
-assert で保証する。
+Parser note: pqr is whitespace-separated, but the field count drops when coordinates run together
+(in 6ZHF, 67% of the ATOM lines have 9 fields). Lines must not be rejected by field count.
+Coordinates are read from fixed columns (30-54). An assert guarantees that not one ATOM line of a
+titratable residue is dropped.
 """
 
 import collections
@@ -52,7 +52,7 @@ TITR = {
     "ARG",
     "AR0",
 }
-# 名前から素の残基種へ
+# Name to the base residue type
 BASE = {
     "ASH": "ASP",
     "GLH": "GLU",
@@ -68,7 +68,7 @@ BASE = {
 
 
 def parse(pqr):
-    """滴定可能残基ごとの情報と、取りこぼし検算用の行数を返す。"""
+    """Return the information for each titratable residue and the line counts for the drop cross-check."""
     res, seen, placed = collections.OrderedDict(), 0, 0
     for l in open(pqr, errors="replace"):
         if not l.startswith(("ATOM", "HETATM")):
@@ -85,8 +85,8 @@ def parse(pqr):
             float(f[-1])
         except ValueError:
             continue
-        # 鎖 ID は残基名と残基番号の間に入る。PDB2PQR は既定で落とすが
-        # --keep-chain を付けると残る。あれば鍵に入れる。
+        # The chain ID goes between the residue name and the residue number. PDB2PQR drops it by
+        # default, but it stays when --keep-chain is given. Put it in the key when present.
         chain, num = "", ""
         for j in range(4, min(7, len(f))):
             if f[j].rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ").lstrip("-").isdigit():
@@ -101,9 +101,10 @@ def parse(pqr):
         e = res.setdefault(
             (chain, num, rn), {"base": BASE.get(rn, rn), "name": rn, "at": set(), "q": 0.0, "sg": None, "dup": 0}
         )
-        # 同じ原子名が二度来たら、別の鎖の同番号残基が併合されたか altLoc である。
-        # set に入れて黙って消すと、片方の HD1 と他方の HE2 が 1 残基に見え、
-        # 架空の HIP(+1) が生まれる。数えて呼び出し側に報告する。
+        # The same atom name coming twice means same-numbered residues from different chains were
+        # merged, or altLoc. Putting it in the set and dropping it silently makes HD1 from one and
+        # HE2 from the other look like one residue, and a spurious HIP(+1) is created. Count them and
+        # report to the caller.
         if name in e["at"]:
             e["dup"] += 1
         e["at"].add(name)
@@ -117,7 +118,7 @@ def parse(pqr):
 
 
 def classify(res):
-    """残基ごとに状態を決める。CYS は SG-SG 距離が要るので全体を見る。"""
+    """Decide the state of each residue. CYS needs the SG-SG distance, so the whole set is looked at."""
     sgs = [(k, v["sg"]) for k, v in res.items() if v["base"] == "CYS" and v["sg"] is not None]
     ss = set()
     for i in range(len(sgs)):
@@ -158,29 +159,33 @@ def main():
     for f in sorted(glob.glob(os.path.join(pqrdir, "*.pqr"))):
         pid = os.path.basename(f)[:4].upper()
         res, seen, placed = parse(f)
-        assert seen == placed, f"{pid}: 滴定可能残基の行 {seen} 本中 {placed} 本しか割り当てていない"
-        for (num, rn), (base, name, state) in classify(res).items():
+        assert seen == placed, f"{pid}: only {placed} of {seen} titratable-residue lines were assigned"
+        # The key carries the chain ID as well, which is empty unless PDB2PQR was given --keep-chain.
+        # It is not written to the CSV; the columns below are the ones the deposited table has.
+        for (_chain, num, rn), (base, name, state) in classify(res).items():
             rows.append({"pdb_id": pid, "resnum": num, "base": base, "name_in_pqr": name, "state": state})
     if out:
         with open(out, "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(rows[0]))
             w.writeheader()
             w.writerows(rows)
-    print(f"{len({r['pdb_id'] for r in rows})} 本、滴定可能残基 {len(rows)} 個 （取りこぼしゼロを検算済み）")
+    print(f"{len({r['pdb_id'] for r in rows})} structures, {len(rows)} titratable residues (zero drops cross-checked)")
     unk = [r for r in rows if r["state"].startswith("unknown")]
     print(
-        f"分類できなかった残基 {len(unk)} 個"
+        f"{len(unk)} residues could not be classified"
         + (f": {collections.Counter((r['base'], r['state']) for r in unk).most_common(6)}" if unk else "")
     )
-    print("\n=== PDB2PQR が名前に状態を反映するか ===")
-    print(f"{'素の残基':<9}{'状態':<14}{'個数':>7}  pqr 中の名前")
+    print("\n=== Whether PDB2PQR reflects the state in the name ===")
+    print(f"{'base':<9}{'state':<14}{'count':>7}  name in pqr")
     tab = collections.defaultdict(collections.Counter)
     for r in rows:
         tab[(r["base"], r["state"])][r["name_in_pqr"]] += 1
     for (base, state), names in sorted(tab.items()):
         shown = ", ".join(f"{n} {c}" for n, c in names.most_common())
         hidden = (
-            "  <- 名前で区別できない" if len(names) == 1 and state not in ("charged+", "charged-", "disulfide") else ""
+            "  <- not distinguishable by name"
+            if len(names) == 1 and state not in ("charged+", "charged-", "disulfide")
+            else ""
         )
         print(f"{base:<9}{state:<14}{sum(names.values()):>7}  {shown}{hidden}")
     if out:

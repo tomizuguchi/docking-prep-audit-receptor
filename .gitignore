@@ -10,7 +10,8 @@ __pycache__/
 .venv/
 venv/
 
-# 再現で作られる作業ディレクトリ（寄託しない。sha256 だけ data_receptor/ にある）
+# Working directories created by a reproduction run.
+# Not deposited; only their sha256 checksums are, in data_receptor/.
 /full100/
 /in_hetall/
 /in_nowat/

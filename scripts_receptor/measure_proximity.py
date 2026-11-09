@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
-"""滴定状態が動いた残基が、金属や配位子からどれだけ近いかを測る。
+"""Measure how close the residues whose titration state moved are to the metal or the ligand.
 
   python3 measure_proximity.py <diff.csv> <structure_dir> [--col ligand_removal_changed]
 
-`arms_diff.csv`（配位子の除去順で状態が動いた残基）や `tool_diff.csv`
-（ツール間で形式電荷が食い違う残基）を受け取り、各残基について
+Takes `arms_diff_3way.csv` (residues whose state moved with the order of ligand removal) or `tool_diff.csv`
+(residues whose formal charge disagrees between the tools) and, for each residue, gives
 
-  - 最も近い金属までの距離
-  - 最も近い水以外の HETATM までの距離
+  - the distance to the nearest metal
+  - the distance to the nearest HETATM other than water
 
-を出す。距離は残基の滴定可能原子すべてから測る。
+The distances are measured from all of the titratable atoms of the residue.
 
-なぜ書いたか
-  この測定は以前その場限りのコードで行われ、スクリプトが残っていなかった。
-  記録にある「48% が金属から 2.6 Å 以内」「64 残基すべてが配位子から 9.4 Å 以内」
-  は再生成できない状態だった。
+Why this was written
+  This measurement was done earlier with one-off code, and no script was left.
+  "48% within 2.6 A of a metal" and "all 64 residues within 9.4 A of the ligand" in the record
+  were in a state where they could not be regenerated.
 
-なぜ測り直すか
-  check_receptor.py の W1 が、滴定可能原子の最初の 1 つしか見ずに打ち切って
-  いた。HIS は ND1 だけで NE2 を見ず、ARG は NE だけだった。配位圏の判定が
-  変わるので、この表も同じ定義で測り直す必要がある。
-  --legacy を付けると以前の「最初の 1 原子だけ」の挙動も併記する。
+Why it is measured again
+  W1 of check_receptor.py looked at only the first of the titratable atoms and stopped there.
+  For HIS it used only ND1 and did not look at NE2, and for ARG it used only NE. The decision on
+  the coordination sphere changes, so this table has to be measured again with the same definition.
+  With --legacy, the earlier "first atom only" behaviour is reported alongside.
 
-注意
-  diff の CSV に鎖の列が無い。同じ残基番号が複数の鎖にある場合は全部の鎖で
-  測って最小値を採り、何件が曖昧だったかを別に報告する。
+Note
+  The diff CSV has no chain column. When the same residue number is in several chains, all of the
+  chains are measured and the minimum is taken, and how many cases were ambiguous is reported separately.
 """
 
 import argparse
@@ -38,9 +38,9 @@ from check_receptor import TITR_ATOM, dist, read_pdb
 
 
 def min_dist(e, rn, targets, first_only=False):
-    """残基の滴定可能原子から targets までの最短距離と、その原子名。
+    """Shortest distance from the titratable atoms of the residue to targets, and the name of that atom.
 
-    first_only=True は修正前の挙動（存在する最初の 1 原子で打ち切る）。"""
+    first_only=True is the behaviour before the fix (stop at the first atom that exists)."""
     best, who = None, None
     for a in TITR_ATOM.get(rn, ()):
         if a not in e["atoms"]:
@@ -57,15 +57,15 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("diff_csv")
     ap.add_argument("structure_dir")
-    ap.add_argument("--col", default=None, help="この列が '1' の行だけを使う（既定は全行）")
-    ap.add_argument("--legacy", action="store_true", help="修正前の『最初の1原子だけ』の値も併記する")
-    ap.add_argument("--out", help="行ごとの結果を書き出す CSV")
+    ap.add_argument("--col", default=None, help="use only the rows where this column is '1' (default is all rows)")
+    ap.add_argument("--legacy", action="store_true", help="also report the 'first atom only' values before the fix")
+    ap.add_argument("--out", help="CSV to write the per-row results to")
     a = ap.parse_args()
 
     rows = list(csv.DictReader(open(a.diff_csv)))
     if a.col:
         rows = [r for r in rows if r.get(a.col) == "1"]
-    print(f"{a.diff_csv}: 対象 {len(rows)} 行{f'（{a.col}=1 のみ）' if a.col else ''}")
+    print(f"{a.diff_csv}: {len(rows)} rows selected{f' ({a.col}=1 only)' if a.col else ''}")
 
     cache, out, ambiguous, missing = {}, [], 0, []
     for r in rows:
@@ -78,7 +78,7 @@ def main():
             missing.append(pid)
             continue
         res, het, metals, _nH, _g, _inc = got
-        # 鎖が CSV に無いので、同じ残基番号・同じ残基名を全鎖から拾う
+        # The chain is not in the CSV, so pick up the same residue number and residue name from all chains
         hits = [e for (ch, n, rn), e in res.items() if n == str(num) and rn == base]
         if not hits:
             missing.append(f"{pid}:{base}{num}")
@@ -115,43 +115,46 @@ def main():
         out.append(rec)
 
     if missing:
-        print(f"  !! 見つからなかった {len(missing)} 件: {missing[:6]}")
+        print(f"  !! {len(missing)} not found: {missing[:6]}")
     if ambiguous:
-        print(f"  !! 残基番号が複数の鎖にある行 {ambiguous} 件（全鎖の最小値を採った）")
+        print(f"  !! {ambiguous} rows whose residue number is in several chains (the minimum over all chains taken)")
 
     def summarize(key, label, cut):
         vals = [r[key] for r in out if r[key] != ""]
         if not vals:
-            print(f"\n{label}: 該当なし")
+            print(f"\n{label}: none")
             return
         vals = sorted(vals)
         n = len(vals)
         within = sum(1 for v in vals if v < cut)
-        print(f"\n{label}  対象 {n} 残基")
-        print(f"  中央値 {vals[n // 2]:.2f} Å   最小 {vals[0]:.2f}   最大 {vals[-1]:.2f}")
-        print(f"  {cut} Å 未満 {within} 件 ({100 * within / n:.0f}%)")
+        print(f"\n{label}  {n} residues")
+        print(f"  median {vals[n // 2]:.2f} A   min {vals[0]:.2f}   max {vals[-1]:.2f}")
+        print(f"  under {cut} A {within} cases ({100 * within / n:.0f}%)")
         for t in (4.0, 6.0, 10.0):
             print(
-                f"  {t:>4.0f} Å 未満 {sum(1 for v in vals if v < t):>3} 件"
+                f"  under {t:>4.0f} A {sum(1 for v in vals if v < t):>3} cases"
                 f" ({100 * sum(1 for v in vals if v < t) / n:>3.0f}%)"
             )
 
-    summarize("d_metal", "金属までの距離", 2.6)
-    summarize("d_het", "水以外の HETATM までの距離", 2.6)
+    summarize("d_metal", "distance to the metal", 2.6)
+    summarize("d_het", "distance to the HETATM other than water", 2.6)
 
     if a.legacy:
         for tag, cut in (("metal", 2.6),):
             new = [r for r in out if r[f"d_{tag}"] != "" and r[f"d_{tag}"] < cut]
             old = [r for r in out if r.get(f"d_{tag}_legacy") != "" and r[f"d_{tag}_legacy"] < cut]
-            print(f"\n{tag} {cut} Å 未満の件数")
-            print(f"  修正前（最初の1原子だけ）{len(old)}")
-            print(f"  修正後（全原子）        {len(new)}")
+            print(f"\nnumber of cases under {cut} A for {tag}")
+            print(f"  before the fix (first atom only) {len(old)}")
+            print(f"  after the fix (all atoms)        {len(new)}")
             gained = [r for r in new if r not in old]
             if gained:
                 c = collections.Counter((r["base"], r[f"atom_{tag}"]) for r in gained)
-                print("  新たに圏内になった残基: " + ", ".join(f"{b} の {at} {n} 件" for (b, at), n in c.most_common()))
+                print(
+                    "  residues newly inside the range: "
+                    + ", ".join(f"{at} of {b} {n} cases" for (b, at), n in c.most_common())
+                )
 
-    print("\n原子の内訳（金属に最も近い滴定可能原子）:")
+    print("\nBreakdown of the atoms (the titratable atom nearest the metal):")
     c = collections.Counter(r["atom_metal"] for r in out if r["atom_metal"])
     for (at), n in c.most_common():
         print(f"  {at:<5} {n}")

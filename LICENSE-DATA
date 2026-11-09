@@ -1,28 +1,29 @@
 Creative Commons Attribution 4.0 International (CC BY 4.0)
 
 SPDX-License-Identifier: CC-BY-4.0
-正式な条文: https://creativecommons.org/licenses/by/4.0/legalcode
-読みやすい要約: https://creativecommons.org/licenses/by/4.0/
+Full text: https://creativecommons.org/licenses/by/4.0/legalcode
+Readable summary: https://creativecommons.org/licenses/by/4.0/
 
 Copyright (c) 2026 Tomoko Mizuguchi
 
-適用範囲
+SCOPE
 
-このライセンスはこの寄託物のデータと文章に適用される。
+This licence covers the data and the prose in this deposit.
 
-  data_receptor/        受容体側の測定結果 CSV と sha256 の一覧
+  data_receptor/        the measurement tables and the checksum listings
   README.md
   environment.md
 
-ソフトウェアは MIT License で、LICENSE を見ること。
+The software is under the MIT License; see LICENSE.
 
-帰属表示
+ATTRIBUTION
 
-再利用するときは、この寄託物と、それを記述した論文を引用すること。
-引用すべき形は CITATION.cff にある。
+When reusing this material, cite this deposit and the paper that describes it.
+The form to cite is in CITATION.cff.
 
-第三者由来のものについて
+THIRD-PARTY MATERIAL
 
-data_receptor/ の測定は RCSB Protein Data Bank から取得した 100 件の
-エントリに対して行った。識別子は data_receptor/full100_manifest.csv に
-ある。これらの一次資料それ自体の条件は提供元に従う。
+The measurements in data_receptor/ were made on 100 entries fetched from the RCSB
+Protein Data Bank. Their identifiers are listed in
+data_receptor/full100_manifest.csv. The terms on those primary sources themselves
+are whatever their provider sets.

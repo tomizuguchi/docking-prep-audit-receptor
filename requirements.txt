@@ -1,14 +1,14 @@
-# 解析（data_receptor/ の CSV を作り直す）に要るもの
+# Needed by the analysis, which rebuilds the CSVs in data_receptor/
 numpy
 
 # ---------------------------------------------------------------------------
-# 準備そのものを再現する場合は、これに加えて次が要る。
-# バージョンを厳密に合わせること（environment.md を見ること）。
+# Reproducing the preparation itself needs these as well.
+# Match the versions exactly; see environment.md.
 #
 #   pdb2pqr==3.8.0
 #   propka==3.5.1
 #   meeko==0.8.0
 #
-# ここにコメントとして置いてあるのは、解析だけなら不要であり、
-# また pdb2pqr と meeko を入れると依存が大きく広がるため。
+# They are listed as comments because the analysis alone does not need them,
+# and because pdb2pqr and meeko pull in a large dependency tree.
 # ---------------------------------------------------------------------------

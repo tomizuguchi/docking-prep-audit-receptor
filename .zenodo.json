@@ -21,6 +21,6 @@
       "orcid": "0000-0001-9780-765X"
     }
   ],
-  "_comment_related": "【要判断】論文が受理されたら related_identifiers に DOI を足すこと。relation は isSupplementTo。配位子側の寄託物ができたら isPartOf か references で相互に繋ぐこと。",
-  "_comment_license": "ソフトウェアは MIT、データと文章は CC BY 4.0。Zenodo のメタデータは 1 つしかライセンスを持てないので MIT を記載し、内訳は LICENSE と LICENSE-DATA に置いてある。"
+  "_comment_related": "TO DECIDE: once the paper is accepted, add its DOI under related_identifiers with relation isSupplementTo. Once the ligand-side deposit exists, link the two with isPartOf or references.",
+  "_comment_license": "The software is MIT; the data and prose are CC BY 4.0. Zenodo metadata holds only one licence, so MIT is recorded here and the split is stated in LICENSE and LICENSE-DATA."
 }

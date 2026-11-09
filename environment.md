@@ -1,56 +1,59 @@
-# 走行環境
+# Run environment
 
-## バージョン
+## Versions
 
-| ツール | バージョン | 出所 |
+| Tool | Version | Where this comes from |
 |---|---|---|
 | PDB2PQR | 3.8.0 | `pdb2pqr --version` |
-| propka | 3.5.1 | PDB2PQR が内部で呼ぶ |
-| Meeko | 0.8.0 | `mk_prepare_receptor.py --help` と log 本文 |
+| propka | 3.5.1 | called internally by PDB2PQR |
+| Meeko | 0.8.0 | `mk_prepare_receptor.py --help` and the text of the logs |
 | Python | 3.11 | |
-| numpy | 2.x | 解析のみ |
+| numpy | 2.x | analysis only |
 
-Meeko の版はこの寄託物では 0.8.0 である。0.7 系との違いは次の 2 点。
+The Meeko version in this deposit is 0.8.0. It differs from the 0.7.x series in two
+ways.
 
-- 既定のテンプレートの内容が違う。
-- `-a` / `--allow_bad_res` が 0.8.0 では `-x` / `--delete_bad_res` に改名された。
-  旧名も受け付けるが `--help` には出ない。`run_meeko.py` は旧名の `-a` を
-  渡しており、0.8.0 でも通る。
+- The contents of the built-in templates differ.
+- `-a` / `--allow_bad_res` was renamed to `-x` / `--delete_bad_res` in 0.8.0. The
+  old names are still accepted but do not appear in `--help`. `run_meeko.py`
+  passes the old `-a`, which 0.8.0 accepts.
 
-0.7 系で走らせた場合、同じスクリプトでも出力が一致しない可能性がある。
-`data_receptor/prepared_sha256.txt` との照合はバージョンを合わせてから行うこと。
+Run under the 0.7.x series, the same scripts may not produce identical output.
+Match the version before checking against `data_receptor/prepared_sha256.txt`.
 
-## 2 つの計算機にまたがる
+## Two machines were involved
 
-| 段 | 走らせた場所 | rcsb.org への到達 |
+| Stage | Where it ran | Reaches rcsb.org |
 |---|---|---|
-| 100 構造の取得 | 構造を集めた計算機 | あり |
-| Meeko・PDB2PQR の全条件 | 通信制限のある計算機 | なし |
+| Fetching the 100 structures | the machine the structures were collected on | yes |
+| Every Meeko and PDB2PQR condition | a machine with restricted network access | no |
 
-`full100/` の PDB は通信のある計算機で取得した（ディレクトリに macOS の付随
-ファイル `._*` が混ざっているのはそのため）。その後の準備と測定は rcsb.org に
-到達できない環境で走らせた。HTTP の接続はプロキシが 403 を返す。
+The PDB files in `full100/` were fetched on the machine with network access, which
+is why that directory carries macOS sidecar files (`._*`). The preparation and the
+measurements that followed ran in an environment that cannot reach rcsb.org. HTTP
+connections are refused by a proxy with 403.
 
 ```
 $ python3 -c "import urllib.request; urllib.request.urlopen('https://files.rcsb.org/download/1BGP.pdb')"
 urllib.error.URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
 ```
 
-## この制限がかかるのは配位子を残した条件だけ
+## The restriction bites only in the condition that keeps the ligands
 
-`mk_prepare_receptor` は内蔵テンプレートに無い残基に出会うと、その残基の CIF を
-実行時に rcsb.org から取得しようとする。HETATM を残した入力でだけこれが起きる。
+On meeting a residue absent from its built-in templates, `mk_prepare_receptor`
+tries to fetch that residue's CIF from rcsb.org at run time. This happens only for
+inputs in which the HETATM records were kept.
 
-| 条件 | log | 取得試行 | pdbqt | 出力なしの理由 |
+| Condition | logs | fetch attempts | pdbqt | why there is no output |
 |---|---|---|---|---|
-| `meeko_nowat`（配位子あり） | 100 | 77 | 21 | 通信 77 / 通信以外 2 |
-| `meekoA` | 100 | 0 | 99 | 通信以外 1 |
-| `meekoA_noa` | 100 | 0 | 61 | 通信以外 39 |
-| `meekoB` | 100 | 0 | 98 | 通信以外 2 |
-| PDB2PQR 4 条件 | 724 | 0 | — | — |
+| `meeko_nowat` (ligands present) | 100 | 77 | 21 | network 77 / other than network 2 |
+| `meekoA` | 100 | 0 | 99 | other than network 1 |
+| `meekoA_noa` | 100 | 0 | 61 | other than network 39 |
+| `meekoB` | 100 | 0 | 98 | other than network 2 |
+| PDB2PQR, 4 conditions | 724 | 0 | — | — |
 
-取得試行の判定は、log 本文に `rcsb.org`、`urlopen`、`download CIF` のいずれかが
-あるかで行った。log に残る文字列は次の形。
+A fetch attempt was counted when the body of a log contains `rcsb.org`, `urlopen`
+or `download CIF`. The string left in a log takes this form.
 
 ```
 Could not download CIF file for HEM. If this is a certificate error and you trust
@@ -58,28 +61,31 @@ rcsb.org is not spoofed, you could try the --ignore_https_cert option.
 Error: <urlopen error Tunnel connection failed: 403 Forbidden>
 ```
 
-1 本の log に出てくる残基名は 1 つだけ（77/77）。照合できない最初の残基で止まり、
-残りは報告されない。77 本で挙がった残基名は 62 種類で、構造数の多いものは
-SO4 8 本、NA 3 本、HEM・GTP・MRD・GOL・ANP・ACT が各 2 本。結晶化添加物だけで
-止まった構造は 22 本。
+Each log names exactly one residue (77 of 77). The run stops at the first residue it
+cannot match and the rest are never reported. The 77 logs name 62 distinct
+residues; the most frequent are SO4 in 8 structures, NA in 3, and HEM, GTP, MRD,
+GOL, ANP and ACT in 2 each. For 22 structures the run stopped on a
+crystallization additive alone.
 
-## 読むときの注意
+## Notes for the reader
 
-`meeko_nowat` の pdbqt 21 本は、通信のある環境での通過率ではない。rcsb.org に
-到達できる計算機で `run_meeko.py` を走らせれば別の本数になる。再現を試みて 403 が
-出た場合、それは走行環境の通信制限であって Meeko の失敗ではない。
+The 21 pdbqt files in `meeko_nowat` are not a pass rate for a machine with network
+access. Running `run_meeko.py` on a machine that reaches rcsb.org will give a
+different count. If a reproduction attempt produces 403, that is the restricted
+network access of the environment, not a failure of Meeko.
 
-`mk_prepare_receptor.py --help` に `--cache_templates` と `--add_templates` がある。
-取得したテンプレートをローカルに持たせる経路だが、この測定では使っていない。
-`--cache_templates` は 0.7.0 以降にあり、既定では無効である。
+`mk_prepare_receptor.py --help` offers `--cache_templates` and `--add_templates`.
+These are the route to holding fetched templates locally, and neither was used in
+these measurements. `--cache_templates` exists from 0.7.0 onward and is off by
+default.
 
-## 再実行で確かめた範囲
+## What was confirmed by re-running
 
-| 段 | 確かめ方 | 結果 |
+| Stage | How it was checked | Result |
 |---|---|---|
-| `make_inputs.py` の 3 条件 | 全 300 ファイルを作り直して byte 比較 | 一致 |
-| PDB2PQR 3 条件 | 6 本を作り直して md5 比較 | 一致 |
-| Meeko 4 条件 | 6 本を作り直して md5 比較 | 一致 |
-| `measure_field.py` | `--selftest`（解析解 6 件） | 一致 |
+| The three conditions from `make_inputs.py` | all 300 files rebuilt and compared byte for byte | identical |
+| PDB2PQR, 3 conditions | 6 files rebuilt and compared by md5 | identical |
+| Meeko, 4 conditions | 6 files rebuilt and compared by md5 | identical |
+| `measure_field.py` | `--selftest`, 6 analytic checks | identical |
 
-どのディレクトリが何から作られたかは `data_receptor/provenance.csv` にある。
+Which directory was built from what is recorded in `data_receptor/provenance.csv`.

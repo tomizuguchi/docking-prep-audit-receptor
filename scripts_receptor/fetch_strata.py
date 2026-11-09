@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-分解能で層化した PDB 構造の取得。乱数シードとクエリを manifest に残す。
+Fetch PDB structures stratified by resolution. The random seed and the query are left in the manifest.
 
-  python3 fetch_strata.py list                        各層の件数だけ確認（落とさない）
-  python3 fetch_strata.py list  --group               配列90%で重複排除した版の件数
+  python3 fetch_strata.py list                        check only the count of each stratum (no download)
+  python3 fetch_strata.py list  --group               counts for the version deduplicated at 90% sequence identity
   python3 fetch_strata.py fetch <N> <outdir> [seed] [--group]
 
-同じ seed なら N を増やしたときに前の標本が先頭にそのまま残る
-（パイロット 8 本/層 ⊂ 本番 20 本/層）。manifest の draw_rank が抽選順。
+With the same seed, increasing N leaves the previous sample at the head unchanged
+(pilot 8 per stratum is a subset of production 20 per stratum). draw_rank in the manifest is the draw order.
 
-既定は return_type=entry、重複排除なし（＝エントリ母集団の標本）。
---group を付けると配列同一性90%の代表のみ（＝タンパク母集団に近い標本）。
-どちらを使ったかは manifest.csv と query.json に記録される。
+The default is return_type=entry with no deduplication (= a sample of the entry population).
+With --group, only the representatives at 90% sequence identity are used (= a sample close to the
+protein population). Which of the two was used is recorded in manifest.csv and query.json.
 """
 
 import csv
@@ -67,9 +67,9 @@ def post(q, label=""):
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
         print(f"  !! {label} HTTP {e.code}")
-        print("  --- サーバの返答 ---")
+        print("  --- server response ---")
         print("  " + e.read().decode()[:1500].replace("\n", "\n  "))
-        print("  --- 送ったクエリ ---")
+        print("  --- query sent ---")
         print("  " + json.dumps(q)[:900])
         return None
     except Exception as e:
@@ -78,7 +78,7 @@ def post(q, label=""):
 
 
 def ids_for(lo, hi, group, verbose=True):
-    """paginate の上限(10000)を超える層は start を進めて全件集める。"""
+    """For a stratum above the paginate limit (10000), advance start and collect every entry."""
     PAGE, got, total, start = 10000, set(), None, 0
     while True:
         q = query(lo, hi, group)
@@ -102,12 +102,13 @@ def ids_for(lo, hi, group, verbose=True):
 
 
 def pools_for(group):
-    """全層の ID を集め、2 層以上に現れるエントリを全層から除いて返す。
+    """Collect the IDs of all strata and return them with entries in 2 or more strata removed from every stratum.
 
-    resolution_combined は配列属性で、range 検索は「配列のどれかが範囲内」で
-    当たる。分解能値を複数持つエントリは複数の層に同時に入り、層化が崩れる。
-    どちらの値が「その構造の分解能」かをここでは決められないので、
-    またいだエントリは母集団から外す。外した ID は excluded.csv に残す。
+    resolution_combined is an array attribute, and a range search matches when "any element of the
+    array is in the range". An entry with several resolution values enters several strata at once, and
+    the stratification breaks down. Which of the values is "the resolution of that structure" cannot be
+    decided here, so entries that straddle strata are removed from the population. The removed IDs are
+    left in excluded.csv.
     """
     pools, totals = {}, {}
     for name, lo, hi in STRATA:
@@ -129,16 +130,16 @@ def pools_for(group):
             for b in range(a + 1, len(names)):
                 ov = pools[names[a]] & pools[names[b]]
                 if ov:
-                    print(f"  層の重複 {names[a]} ∩ {names[b]}: {len(ov)} 件")
+                    print(f"  stratum overlap {names[a]} & {names[b]}: {len(ov)} entries")
         print(
-            f"  分解能値を複数持ち層をまたぐエントリ {len(multi)} 件を全層から除外"
-            f"（母集団 {len(seen)} 本の {len(multi) / len(seen) * 100:.2f}%）"
+            f"  excluding {len(multi)} entries with several resolution values that straddle strata from all strata"
+            f" ({len(multi) / len(seen) * 100:.2f}% of the population of {len(seen)})"
         )
         for n in names:
             pools[n] -= multi
     else:
-        print("  層間の重複なし")
-    print(f"  有効母集団 {sum(len(p) for p in pools.values())} 本")
+        print("  no overlap between strata")
+    print(f"  effective population {sum(len(p) for p in pools.values())} entries")
     return pools, totals, where
 
 
@@ -150,14 +151,14 @@ def main():
         return
     mode = args[0]
     if mode == "list":
-        print(f"重複排除: {'配列同一性90%の代表のみ' if group else 'なし（エントリ母集団）'}")
+        print(f"dedup: {'representatives at 90% sequence identity only' if group else 'none (entry population)'}")
         pools, totals, where = pools_for(group)
         if pools is None:
-            print("\n上のサーバ返答を貼っていただければ直します。")
+            print("\nPaste the server response above and this can be fixed.")
             return
         for name, lo, hi in STRATA:
-            print(f"  {name:<10} {lo}–{hi} Å : 検索 {totals[name]}、重複除外後 {len(pools[name])}")
-        print("\nfetch に進めます。")
+            print(f"  {name:<10} {lo}-{hi} A : search {totals[name]}, after overlap exclusion {len(pools[name])}")
+        print("\nReady to proceed to fetch.")
         return
     if mode != "fetch":
         print(__doc__)
@@ -167,18 +168,18 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     pools, totals, where = pools_for(group)
     if pools is None:
-        print("  取得失敗。中止")
+        print("  fetch failed. Abort")
         return
     with open(os.path.join(outdir, "excluded.csv"), "w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["pdb_id", "reason", "strata"])
         for pid, ns in sorted(where.items()):
-            w.writerow([pid, "resolution_combined が複数層にまたがる", "|".join(ns)])
+            w.writerow([pid, "resolution_combined straddles several strata", "|".join(ns)])
     man, failed = [], []
     for name, lo, hi in STRATA:
         ids = sorted(pools[name])
-        # 全順列を作って先頭から取る。同じ seed なら N を増やしても
-        # 前の標本がそのまま先頭に残る（パイロット ⊂ 本番）。
+        # Build the full permutation and take from the head. With the same seed, increasing N
+        # leaves the previous sample at the head unchanged (pilot is a subset of production).
         order = random.Random(f"{seed}:{name}").sample(ids, len(ids))
         pick, rank, i, bad = [], {}, 0, 0
         while len(pick) < min(N, len(ids)) and i < len(order):
@@ -194,22 +195,25 @@ def main():
                     bad += 1
                     failed.append({"stratum": name, "pdb_id": pid, "draw_rank": i, "reason": f"{type(e).__name__} {e}"})
                     continue
-            # 404 や mmCIF のみのエントリで HTML/空ファイルが残ることがある
+            # A 404, or an entry that exists only as mmCIF, can leave an HTML or empty file behind
             try:
                 head = open(dst, errors="replace").read(200)
                 nl = sum(1 for _ in open(dst, errors="replace"))
             except Exception:
                 head, nl = "", 0
             if not head.startswith("HEADER") or nl < 100:
-                print(f"    !! {pid}: PDB 形式でない（{nl} 行）。除外")
+                print(f"    !! {pid}: not PDB format ({nl} lines). Excluded")
                 os.remove(dst)
                 bad += 1
-                failed.append({"stratum": name, "pdb_id": pid, "draw_rank": i, "reason": f"PDB 形式でない（{nl} 行）"})
+                failed.append(
+                    {"stratum": name, "pdb_id": pid, "draw_rank": i, "reason": f"not PDB format ({nl} lines)"}
+                )
                 continue
             rank[pid] = i
             pick.append(pid)
         print(
-            f"  {name:<10} 母集団 {len(ids)} から {len(pick)} 本" + (f"（{bad} 本は取得できず飛ばした）" if bad else "")
+            f"  {name:<10} {len(pick)} entries from a population of {len(ids)}"
+            + (f" ({bad} could not be fetched and were skipped)" if bad else "")
         )
         for pid in pick:
             man.append(
@@ -225,14 +229,17 @@ def main():
                 }
             )
     if not man:
-        print("  1 本も取得できませんでした")
+        print("  not a single entry could be fetched")
         return
     if failed:
         with open(os.path.join(outdir, "failed.csv"), "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(failed[0]))
             w.writeheader()
             w.writerows(failed)
-        print(f"  取得できなかった {len(failed)} 本は failed.csv に記録（次順位で補充済み）")
+        print(
+            f"  the {len(failed)} entries that could not be fetched are recorded in failed.csv"
+            f" (already refilled from the next rank)"
+        )
     with open(os.path.join(outdir, "manifest.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(man[0]))
         w.writeheader()
@@ -244,10 +251,10 @@ def main():
                 "dedup90": group,
                 "endpoint": SEARCH,
                 "exclusion_rule": (
-                    "resolution_combined は配列属性のため複数層に当たる"
-                    "エントリがある。2 層以上に現れた ID は全層から除外した"
-                    "（excluded.csv）。層ごとの母集団は除外後の数で、"
-                    "manifest.csv の pool_size がそれ。"
+                    "resolution_combined is an array attribute, so some entries match "
+                    "several strata. IDs that appeared in 2 or more strata were excluded from all strata "
+                    "(excluded.csv). The population of each stratum is the count after exclusion, "
+                    "which is pool_size in manifest.csv."
                 ),
                 "n_excluded": len(where),
                 "strata": [
@@ -265,7 +272,7 @@ def main():
             fh,
             indent=1,
         )
-    print(f"\n{len(man)} 本 → {outdir}（manifest.csv と query.json 同梱）")
+    print(f"\n{len(man)} entries -> {outdir} (manifest.csv and query.json included)")
 
 
 if __name__ == "__main__":

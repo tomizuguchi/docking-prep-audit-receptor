@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-PDB構造のプロファイラ。前処理パイプラインのコードパスを洗い出す。
+Profiler for PDB structures. Enumerates the code paths of the preprocessing pipeline.
 
-  python3 profile_pdb.py prof  <pdbdir> [out.csv]   各構造のフラグを表にする
-  python3 profile_pdb.py pick  <out.csv> [N]        全フラグを覆う最小集合を選ぶ
+  python3 profile_pdb.py prof  <pdbdir> [out.csv]   tabulate the flags of each structure
+  python3 profile_pdb.py pick  <out.csv> [N]        choose the smallest set that covers all flags
 
-残基番号は (resSeq, iCode) の組で扱う。int() で潰さない。
+Residue numbers are handled as the pair (resSeq, iCode). They are not collapsed with int().
 """
 
 import collections
@@ -46,8 +46,8 @@ def parse(path):
     res = collections.OrderedDict()  # (chain, resSeq, iCode) -> [resName, {atomName: altLoc}]
     het = collections.Counter()
     altlocs = collections.Counter()
-    # 原子名ごとに altLoc の集合を持つ。res の {atomName: altLoc} は 1 個しか
-    # 保持しないので「A も空白も無く B のみ」を表現できない（4MLK MET59 の CA）。
+    # Keep the set of altLocs for each atom name. The {atomName: altLoc} in res holds only one value,
+    # so it cannot express "no A and no blank, only B" (the CA of 4MLK MET59).
     altsets = collections.defaultdict(set)
     ssbond = 0
     nH = 0
@@ -57,9 +57,9 @@ def parse(path):
         if rec == "EXPDTA":
             method = l[10:].strip()[:40]
         elif l.startswith("REMARK   2 RESOLUTION"):
-            # "REMARK   2 RESOLUTION.    1.30 ANGSTROMS." の 1.30 を取る。
-            # 行全体を split() すると REMARK 番号の 2 を先に拾うので、
-            # "RESOLUTION." より後ろだけを見る。NOT APPLICABLE の行は値なし。
+            # Take the 1.30 out of "REMARK   2 RESOLUTION.    1.30 ANGSTROMS.".
+            # split() on the whole line picks up the 2 of the REMARK number first,
+            # so only what follows "RESOLUTION." is examined. A NOT APPLICABLE line has no value.
             for tok in l.split("RESOLUTION.")[-1].split():
                 try:
                     v = float(tok)
@@ -89,9 +89,9 @@ def parse(path):
             else:
                 k = (l[21], int(l[22:26]), l[26])
                 res.setdefault(k, [l[17:20].strip(), {}])[1][l[12:16].strip()] = alt
-                # altLoc の集合には重原子だけ入れる。Meeko に渡す受容体ファイルは
-                # 水素を落としてあるので、寄託水素の altLoc を数えると空振りする
-                # （1EA7 は altLoc 付き水素 2036 個を持つが Meeko は A/B 両方通る）。
+                # Put only heavy atoms into the altLoc set. The receptor file passed to Meeko has its
+                # hydrogens removed, so counting the altLocs of deposited hydrogens gives a false positive
+                # (1EA7 has 2036 hydrogens with an altLoc, but Meeko passes with both A and B).
                 if el != "H":
                     altsets[(k, l[12:16].strip())].add(alt)
     r["method"] = method or ""
@@ -119,26 +119,26 @@ def parse(path):
     r["incomplete_sc"] = len(inc)
     r["incomplete_atoms"] = sum(e - n for _, _, n, e in inc)
     r["incomplete_titr"] = sum(1 for _, rn, _, _ in inc if rn in TITRATABLE)
-    # 修飾残基は ATOM 行で来ることも HETATM 行で来ることもある。MSE などは
-    # 普通 HETATM なので、ATOM 行だけ見ていると取り落とす（パイロットで 4/40 見落とし）。
-    # 主鎖原子の欠損。PDB2PQR が落ちる原因は側鎖ではなく主鎖の欠損である
-    # （パイロット: 落ちた 2 本はどちらも C/CA/O を同時に欠く残基を持ち、
-    #  1 原子だけの欠損なら repair_heavy が再構築して通った）。
+    # A modified residue can arrive on an ATOM line or on a HETATM line. MSE and the like are
+    # normally HETATM, so looking only at ATOM lines drops them (4/40 missed in the pilot).
+    # Missing main-chain atoms. What makes PDB2PQR fail is a missing main chain, not a missing side chain
+    # (pilot: the 2 that failed both had a residue missing C/CA/O at once, and
+    #  with only 1 atom missing, repair_heavy rebuilt it and it passed).
     BB = {"N", "CA", "C", "O"}
     bbmiss = [(k, v[0], BB - set(v[1])) for k, v in sub.items() if BB - set(v[1])]
     r["bb_missing_res"] = len(bbmiss)
     r["bb_max_missing"] = max((len(m) for _, _, m in bbmiss), default=0)
-    # C と O を同時に欠く残基。PDB2PQR の『Too few atoms present to
-    # reconstruct or cap residue』はこの条件で出る（100 本で 3/3、空振り 0）。
+    # Residues missing C and O at once. The PDB2PQR "Too few atoms present to
+    # reconstruct or cap residue" appears under this condition (3/3 in 100 entries, 0 false positives).
     r["bb_cap"] = sum(1 for _, _, m in bbmiss if {"C", "O"} <= m)
     r["bb_missing_detail"] = ";".join(f"{rn}{k[1]}:{'+'.join(sorted(m))}" for k, rn, m in bbmiss[:4])
 
-    # 原子単位の altLoc: ある原子が A でも空白でもない altLoc にしか存在しない場合。
-    # 残基単位の F_altloc_onlyB では捉えられない（4MLK MET59 は N/C/O が空白で
-    # CA だけ altLoc B）。Meeko の --default_altloc A はこの原子を見つけられず落ちる。
-    # A も空白も存在せず、別の altLoc にしか無い原子。--default_altloc A では見つからない。
-    # 既定 altLoc を X にしたとき、X も空白も持たない原子。Meeko は
-    # --default_altloc X でこの原子を見つけられず落ちる（A で 4MLK、B で 3I6H/7USK）。
+    # Per-atom altLoc: the case where an atom exists only under an altLoc that is neither A nor blank.
+    # The per-residue F_altloc_onlyB cannot catch it (in 4MLK MET59, N/C/O are blank and
+    # only CA has altLoc B). Meeko's --default_altloc A cannot find this atom and fails.
+    # An atom with neither A nor blank present, existing only under another altLoc. --default_altloc A does not find it.
+    # Atoms that have neither X nor blank when the default altLoc is X. Meeko
+    # cannot find this atom with --default_altloc X and fails (4MLK with A, 3I6H/7USK with B).
     def no_variant(X):
         return [(k, a) for (k, a), st in altsets.items() if k[0] == tgt and not (st & {" ", X})]
 
@@ -161,12 +161,12 @@ def parse(path):
     return r
 
 
-# fetch_strata.py の検索条件で母集団から除かれているため、
-# 標本をいくら増やしてもゼロのままになるフラグ。検出漏れと区別する。
+# Flags that stay at zero however much the sample is increased, because the search conditions of
+# fetch_strata.py remove them from the population. Distinguish these from a detection failure.
 FRAME_EXCLUDED = {
     "F_multichain": "deposited_polymer_entity_instance_count == 1",
     "F_nucleic": 'selected_polymer_entity_types == "Protein (only)"',
-    "F_no_resol": "resolution_combined に範囲指定",
+    "F_no_resol": "range specified on resolution_combined",
 }
 
 FLAGS = {
@@ -224,16 +224,16 @@ def main():
             w = csv.DictWriter(fh, fieldnames=cols)
             w.writeheader()
             w.writerows(rows)
-        print(f"{len(rows)} 構造 → {out}\n")
-        print("フラグごとの該当構造数")
+        print(f"{len(rows)} structures -> {out}\n")
+        print("number of matching structures per flag")
         for name in FLAGS:
             n = sum(r.get(name) == 1 for r in rows)
             if n:
                 mark = ""
             elif name in FRAME_EXCLUDED:
-                mark = f"  ← 該当なし。検索条件（{FRAME_EXCLUDED[name]}）で出得ない"
+                mark = f"  <- no match. Cannot occur under the search conditions ({FRAME_EXCLUDED[name]})"
             else:
-                mark = "  ← 該当なし。この条件の構造を追加で落とすこと"
+                mark = "  <- no match. Fetch additional structures with this condition"
             print(f"  {name:<16} {n:>3}{mark}")
     elif mode == "pick":
         rows = list(csv.DictReader(open(sys.argv[2])))
@@ -250,12 +250,12 @@ def main():
                 break
             chosen.append(best)
             covered |= gain
-            print(f"  {best['id']}  新たに覆うフラグ: {' '.join(sorted(gain))}")
-        print(f"\nパイロット {len(chosen)} 本: " + " ".join(r["id"] for r in chosen))
+            print(f"  {best['id']}  newly covered flags: {' '.join(sorted(gain))}")
+        print(f"\npilot {len(chosen)} entries: " + " ".join(r["id"] for r in chosen))
         miss = need - covered
         print(
-            f"覆えたフラグ {len(covered)}/{len(need)}"
-            + (f"、未達: {' '.join(sorted(miss))}" if miss else "（全フラグ達成）")
+            f"flags covered {len(covered)}/{len(need)}"
+            + (f", not reached: {' '.join(sorted(miss))}" if miss else " (all flags achieved)")
         )
     else:
         print(__doc__)

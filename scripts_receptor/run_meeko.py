@@ -1,37 +1,39 @@
 #!/usr/bin/env python3
-"""Meeko の mk_prepare_receptor を標本に通し、落ち方を分類する。
+"""Run Meeko's mk_prepare_receptor over the sample and classify how it fails.
 
   python3 run_meeko.py <pdbdir> <outdir> [--rerun | --skip-existing]
-                       [-- 追加オプション...]
+                       [-- extra options...]
 
-既定は Meeko 自身が「バッチ処理向け」として案内する組み合わせ:
+The default here is
   --default_altloc A -a
-これで通らない構造は、人が中を見て --wanted_altloc を決めない限り
-パイプラインに乗らない。何本がそうなるかを数えるのが目的。
+These two were made the default so that 100 structures go through without a person intervening.
+Meeko's own documentation does not point to this combination.
+A structure that does not pass with these does not get onto the pipeline unless a person looks
+inside it and decides --wanted_altloc. The purpose is to count how many structures are like that.
 
-成否の判定
-  mk_prepare_receptor は失敗しても rc=0 を返すことがある。そのため returncode は
-  列に残すが判定には使わない。
+Deciding success or failure
+  mk_prepare_receptor can return rc=0 even when it fails. returncode is therefore kept as a
+  column but is not used for the decision.
 
-  ファイルが存在するかどうかでも足りない。テンプレート照合に失敗した構造でも
-  0 バイトの pdbqt を置くことを実測した（1 原子の PDB で確認。log には
-  "Template matching failed for" が出て、rc=0、pdbqt は 0 バイト）。
-  そのため判定は ATOM 記録が 1 行以上あることとする。ファイルは出たが
-  ATOM が無い場合は failure_kind=empty_output として区別する。
+  Whether the file exists is not enough either. It was measured that a structure whose template
+  matching failed still gets a 0-byte pdbqt (confirmed with a 1-atom PDB; the log shows
+  "Template matching failed for", rc=0, and the pdbqt is 0 bytes).
+  The decision is therefore that there is at least one ATOM record. When the file appeared but
+  has no ATOM, it is distinguished as failure_kind=empty_output.
 
-出力がすでにある場合（重要）
-  判定がファイルの存在に依っているので、前回の出力が残っていると、今回の
-  実行が失敗しても成功と記録される。初版はこれを塞いでいなかった。
-  出力がある状態では既定で走らせず、どちらかを選ばせる。
-    --rerun          その構造の pdbqt を消してから走らせる（測り直す）
-    --skip-existing  走らせず、既存ファイルをそのまま測る（途中から再開する）
-  --skip-existing で飛ばした行は measured_now=0 として記録する。どの行が
-  今回の実行で得られたものかを、出力した CSV から追えるようにするため。
+When output already exists (important)
+  Because the decision depends on the existence of the file, output left from the previous run makes
+  this run be recorded as a success even when it fails. The first version did not block this.
+  With output present, nothing runs by default; one of the two has to be chosen.
+    --rerun          delete that structure's pdbqt and then run (measure again)
+    --skip-existing  do not run and measure the existing file as it is (resume part-way)
+  Rows skipped by --skip-existing are recorded as measured_now=0. This is so that which rows came
+  from this run can be followed from the CSV that is written.
 
-途中で落ちても結果を失わない
-  構造ごとに CSV へ追記して flush する。初版は最後に一括で書いていたため、
-  タイムアウトや例外でラン全体（数百行）が失われた。タイムアウト自体も
-  所見なので、例外で止めず failure_kind に記録して次へ進む。
+Results are not lost when it dies part-way
+  The CSV is appended and flushed per structure. The first version wrote everything at the end, so
+  a timeout or an exception lost the whole run (several hundred rows). A timeout is itself a finding,
+  so it is recorded in failure_kind and the run goes on to the next instead of stopping on an exception.
 """
 
 import argparse
@@ -67,7 +69,7 @@ def classify(txt):
 
 
 def count_atoms(path):
-    """pdbqt の ATOM 記録の行数。ファイルが無ければ 0。"""
+    """Number of ATOM record lines in the pdbqt. 0 when the file does not exist."""
     if not os.path.exists(path):
         return 0
     with open(path, errors="replace") as fh:
@@ -79,10 +81,10 @@ def main():
     ap.add_argument("pdbdir")
     ap.add_argument("outdir")
     g = ap.add_mutually_exclusive_group()
-    g.add_argument("--rerun", action="store_true", help="既存の pdbqt を消してから走らせる")
-    g.add_argument("--skip-existing", action="store_true", help="既存の pdbqt があれば走らせず、それを測る")
+    g.add_argument("--rerun", action="store_true", help="delete the existing pdbqt and then run")
+    g.add_argument("--skip-existing", action="store_true", help="if a pdbqt exists, do not run and measure it")
     ap.add_argument(
-        "extra", nargs="*", help=f"mk_prepare_receptor への追加オプション（既定 {' '.join(DEFAULT_EXTRA)}）"
+        "extra", nargs="*", help=f"extra options for mk_prepare_receptor (default {' '.join(DEFAULT_EXTRA)})"
     )
     a = ap.parse_args()
     extra = a.extra or DEFAULT_EXTRA
@@ -90,9 +92,10 @@ def main():
     os.makedirs(a.outdir, exist_ok=True)
     files = sorted(glob.glob(os.path.join(a.pdbdir, "*.pdb")))
     if not files:
-        sys.exit(f"{a.pdbdir} に *.pdb が無い")
+        sys.exit(f"no *.pdb in {a.pdbdir}")
 
-    # 先に出力の有無を数える。判定がファイルの存在に依るので、黙って走らせない。
+    # Count the existing output first. The decision depends on the existence of the file, so do not
+    # run silently.
     existing = [
         os.path.basename(f)[:4].upper()
         for f in files
@@ -100,17 +103,17 @@ def main():
     ]
     if existing and not (a.rerun or a.skip_existing):
         sys.exit(
-            f"{a.outdir} に pdbqt が {len(existing)} 本ある"
-            f"（{', '.join(existing[:5])}{' ...' if len(existing) > 5 else ''}）。\n"
-            f"成否は pdbqt の ATOM 記録で判定するので、残っていると今回の実行が"
-            f"失敗しても前回のファイルで成功と記録される。\n"
-            f"  --rerun          消してから測り直す\n"
-            f"  --skip-existing  走らせず既存のものを測る（measured_now=0 で記録）"
+            f"{a.outdir} holds {len(existing)} pdbqt files"
+            f" ({', '.join(existing[:5])}{' ...' if len(existing) > 5 else ''}).\n"
+            f"Success is decided from the ATOM records of the pdbqt, so if they are left in place this run"
+            f" is recorded as a success from the previous files even when it fails.\n"
+            f"  --rerun          delete them and measure again\n"
+            f"  --skip-existing  do not run and measure the existing ones (recorded as measured_now=0)"
         )
     if existing:
         print(
-            f"{a.outdir} に pdbqt が {len(existing)} 本ある -> "
-            f"{'消して測り直す' if a.rerun else '走らせず既存のものを測る'}"
+            f"{a.outdir} holds {len(existing)} pdbqt files -> "
+            f"{'delete them and measure again' if a.rerun else 'do not run and measure the existing ones'}"
         )
 
     csv_path = os.path.join(a.outdir, "meeko.csv")
@@ -137,11 +140,11 @@ def main():
                     failure_kind="" if na else "empty_output",
                     secs=0,
                 )
-                print(f"[{i:2}/{len(files)}] {pid} 既存（走らせていない）{'' if na else ' ATOM が無い'}", flush=True)
+                print(f"[{i:2}/{len(files)}] {pid} existing (not run){'' if na else ' no ATOM'}", flush=True)
             else:
                 if pre:
-                    # 消してから走らせる。これをしないと、今回失敗しても
-                    # 前回のファイルが残って成功と記録される。
+                    # Delete, then run. Without this, even when this run fails, the previous
+                    # file is left in place and recorded as a success.
                     os.remove(pdbqt)
                 try:
                     p = subprocess.run(
@@ -156,11 +159,11 @@ def main():
                     txt += f"\n--- timeout after {TIMEOUT}s ---"
                     rc = "timeout"
                 except FileNotFoundError:
-                    sys.exit(f"{BASE[0]} が見つからない")
+                    sys.exit(f"{BASE[0]} not found")
                 with open(base + ".log", "w") as fh:
                     fh.write(txt)
-                # 存在だけでは足りない。0 バイトの pdbqt を置いて rc=0 で
-                # 終わることがあるので、ATOM が 1 行以上あることを見る。
+                # Existence alone is not enough. It can leave a 0-byte pdbqt and finish with rc=0,
+                # so look for at least one ATOM line.
                 na = count_atoms(pdbqt)
                 got = na > 0
                 if got:
@@ -182,7 +185,7 @@ def main():
                     secs=round(time.time() - t0, 1),
                 )
                 print(
-                    f"[{i:2}/{len(files)}] {pid} {'成功' if got else '失敗 ' + kind} ({time.time() - t0:.0f}s)",
+                    f"[{i:2}/{len(files)}] {pid} {'success' if got else 'failure ' + kind} ({time.time() - t0:.0f}s)",
                     flush=True,
                 )
 
@@ -192,14 +195,14 @@ def main():
 
     ok = sum(r["ok"] for r in rows)
     now = sum(r["measured_now"] for r in rows)
-    print(f"\n成功 {ok} / 失敗 {len(rows) - ok}  （オプション: {' '.join(extra)}）")
-    print(f"このランで実際に走らせた構造 {now}/{len(rows)}")
+    print(f"\nsuccess {ok} / failure {len(rows) - ok}  (options: {' '.join(extra)})")
+    print(f"structures actually run in this run {now}/{len(rows)}")
     for k, n in collections.Counter(r["failure_kind"] for r in rows if not r["ok"]).most_common():
-        print(f"  {k}: {n} 本")
-    # returncode は判定に使っていないが、rc=0 のまま失敗した件数は所見として出す
+        print(f"  {k}: {n} structures")
+    # returncode is not used for the decision, but the number that failed with rc=0 is reported as a finding
     liars = sum(1 for r in rows if not r["ok"] and r["returncode"] == 0)
     if liars:
-        print(f"\n失敗したが returncode が 0 だった構造 {liars} 本（rc で判定できないことの実測）")
+        print(f"\n{liars} structures failed but had returncode 0 (measured evidence that rc cannot decide this)")
     print(f"\n-> {csv_path}")
 
 

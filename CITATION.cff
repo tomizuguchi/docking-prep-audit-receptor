@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "この寄託物を使った場合は、下の形で引用してください。"
+message: "If you use this deposit, please cite it as below."
 title: "Scripts and measurements for an audit of receptor preparation in molecular docking"
 abstract: >-
   Scripts and complete measurement tables for an audit of the receptor
@@ -32,24 +32,25 @@ keywords:
   - reproducibility
 
 # ---------------------------------------------------------------------------
-# 【要判断】Zenodo で DOI を取ったら identifiers に足すこと。
-# concept DOI（版をまたぐもの）と、その版の DOI の両方を書ける。
+# TO DECIDE: once a DOI has been minted on Zenodo, add it under identifiers.
+# Both the concept DOI, which spans every version, and this version's DOI can
+# be listed.
 # ---------------------------------------------------------------------------
 # identifiers:
 #   - type: doi
 #     value: "10.5281/zenodo.XXXXXXX"
-#     description: "この版の DOI"
+#     description: "the DOI of this version"
 #   - type: doi
 #     value: "10.5281/zenodo.YYYYYYY"
-#     description: "全ての版を指す concept DOI"
+#     description: "the concept DOI, which spans every version"
 
 # ---------------------------------------------------------------------------
-# 【要判断】論文が出たら preferred-citation をその論文にすること。
-# 現状はこの寄託物自体を指している。
+# TO DECIDE: once the paper is published, point preferred-citation at it.
+# As it stands, the citation refers to this deposit itself.
 # ---------------------------------------------------------------------------
 
 notes: >-
-  ソフトウェア（scripts_receptor/ の 14 本）は MIT License。データと文章
-  （data_receptor/, README.md, environment.md）は CC BY 4.0。LICENSE と
-  LICENSE-DATA を見ること。配位子側（部分電荷の割り当て）の監査は別の
-  寄託物である。
+  The software, the 14 scripts in scripts_receptor/, is under the MIT License.
+  The data and prose, data_receptor/, README.md and environment.md, are under
+  CC BY 4.0. See LICENSE and LICENSE-DATA. The companion audit of
+  partial-charge assignment for ligands is a separate deposit.

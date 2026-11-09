@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""PDB2PQR を標本に通し、中性リジンが LYS の名前で出る頻度を数える。
+"""Run PDB2PQR over the sample and count how often a neutral lysine comes out named LYS.
 
   python3 run_pqr.py <pdbdir> <outdir>
 
-プロトコルはサーベイ本体と同じ:
+The protocol is the same as in the survey proper:
   pdb2pqr --ff=AMBER --with-ph=7.4 --titration-state-method=propka
 
-中性リジンの判定は 2 本立てにする。
-  (1) NZ に付く水素の数。荷電 LYS は HZ1/HZ2/HZ3 の 3 本、中性 LYN は 2 本。
-  (2) 残基の電荷の和。荷電 LYS は +1、中性 LYN は 0。
-AMBER の N/CA/C の電荷で見分ける手もあるが、末端残基で値が変わるので使わない。
-2 つの判定が食い違った残基は別に数えて報告する（判定自体の検証になる）。
+A neutral lysine is identified by two tests.
+  (1) The number of hydrogens on NZ. A charged LYS has 3, HZ1/HZ2/HZ3, a neutral LYN has 2.
+  (2) The residue charge sum. A charged LYS is +1, a neutral LYN is 0.
+The AMBER N/CA/C charges could also tell them apart, but the values change at a terminal residue, so they are not used.
+Residues where the two tests disagree are counted and reported separately (this validates the tests).
 """
 
 import collections
@@ -25,18 +25,18 @@ CMD = ["pdb2pqr", "--ff=AMBER", "--with-ph=7.4", "--titration-state-method=propk
 
 
 def lys_states(pqr):
-    """.pqr の LYS/LYN 残基ごとに (名前, HZ 本数, 電荷の和) を返す。"""
+    """Return (name, HZ count, charge sum) for each LYS/LYN residue in the .pqr."""
     res = collections.OrderedDict()
     for l in open(pqr, errors="replace"):
         if not l.startswith(("ATOM", "HETATM")):
             continue
         f = l.split()
-        # pqr は列固定でなく空白区切りだが、座標が繋がると要素数が落ちる。
-        # 例: "20.691  54.380-100.128" は 3 要素でなく 2 要素になる。
-        # 実際に 6ZHF では ATOM 行 13614 本のうち 9137 本が 9 要素だった。
-        # よって要素数で判定してはいけない。前から名前と残基、後ろから
-        # 電荷と半径を取り、残基番号は f[4] 以降で最初に整数になる要素とする
-        # （鎖 ID 列はあるときとないときがあり、英字なので整数化で弾ける）。
+        # pqr is whitespace separated rather than column fixed, and the field count drops when coordinates
+        # run together. Example: "20.691  54.380-100.128" gives 2 fields, not 3.
+        # In 6ZHF, 9137 of the 13614 ATOM lines actually had 9 fields.
+        # So the field count must not be used to decide. Take the name and residue from the front, the charge
+        # and radius from the back, and take the residue number as the first field from f[4] on that converts
+        # to an integer (the chain ID column is not always present, and being alphabetic it fails that test).
         if len(f) < 8:
             continue
         try:
@@ -49,7 +49,7 @@ def lys_states(pqr):
             continue
         resnum = ""
         for t in f[4:7]:
-            t2 = t.rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ")  # 挿入コード
+            t2 = t.rstrip("ABCDEFGHIJKLMNOPQRSTUVWXYZ")  # insertion code
             if t2.lstrip("-").isdigit():
                 resnum = t
                 break
@@ -78,12 +78,12 @@ def main():
             if p.returncode != 0 or not os.path.exists(pqr):
                 tail = [x for x in (p.stderr or p.stdout).strip().split("\n") if x.strip()]
                 fails.append(
-                    {"pdb_id": pid, "returncode": p.returncode, "error": tail[-1][:300] if tail else "(出力なし)"}
+                    {"pdb_id": pid, "returncode": p.returncode, "error": tail[-1][:300] if tail else "(no output)"}
                 )
-                print(f"[{i:2}/{len(files)}] {pid} 失敗 rc={p.returncode}", flush=True)
+                print(f"[{i:2}/{len(files)}] {pid} failed rc={p.returncode}", flush=True)
                 continue
         st = lys_states(pqr)
-        # 判定 1: HZ が 2 本、 判定 2: 電荷の和が 0 近傍
+        # Test 1: 2 HZ.  Test 2: charge sum near 0
         hz_neutral = [s for s in st if s["hz"] == 2]
         q_neutral = [s for s in st if abs(s["q"]) < 0.5]
         named_lyn = [s for s in st if s["name"] == "LYN"]
@@ -101,8 +101,8 @@ def main():
             }
         )
         print(
-            f"[{i:2}/{len(files)}] {pid} LYS {len(st):3} 中性 {len(hz_neutral):2} "
-            f"うち LYS の名前 {len([s for s in hz_neutral if s['name'] == 'LYS']):2} "
+            f"[{i:2}/{len(files)}] {pid} LYS {len(st):3} neutral {len(hz_neutral):2} "
+            f"of which named LYS {len([s for s in hz_neutral if s['name'] == 'LYS']):2} "
             f"({time.time() - t0:.0f}s)",
             flush=True,
         )
@@ -116,7 +116,7 @@ def main():
             w = csv.DictWriter(fh, fieldnames=list(fails[0]))
             w.writeheader()
             w.writerows(fails)
-    print(f"\n成功 {len(rows)} / 失敗 {len(fails)} → {outdir}")
+    print(f"\nsucceeded {len(rows)} / failed {len(fails)} -> {outdir}")
 
 
 if __name__ == "__main__":

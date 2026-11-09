@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""pqr 群から中性リジン率を測る。取りこぼしゼロを検算しながら数える。
+"""Measure the fraction of neutral lysines over a set of pqr files. Count with a cross-check for zero misses.
 
   python3 measure_lys.py <pqrdir> <manifest.csv>
 
-パーサの教訓: pqr は空白区切りだが座標が繋がって要素数が落ちる
-（6ZHF では ATOM 行の 67% が 9 要素）。要素数で行を弾くと黙って原子が消える。
-この版は LYS/LYN の ATOM 行を 1 本も落とさないことを assert で保証する。
+Parser lesson: pqr is whitespace separated, but coordinates run together and the field count drops
+(in 6ZHF, 67% of the ATOM lines have 9 fields). Rejecting lines by field count silently loses atoms.
+This version uses an assert to guarantee that not one LYS/LYN ATOM line is dropped.
 
-リジンの状態は NZ に付く水素の数で決める。
-  HZ 3 本 = 荷電 LYS (+1)、HZ 2 本 = 中性 LYN、0/1 本 = 側鎖が不完全。
-残基の電荷の和は補助にしか使わない。C 末リジンは荷電でも和が 0 になる
-（末端カルボキシラートが打ち消す）ので、単独では誤判定する。
+The lysine state is decided by the number of hydrogens on NZ.
+  3 HZ = charged LYS (+1), 2 HZ = neutral LYN, 0/1 = incomplete side chain.
+The residue charge sum is used only as a secondary check. A C-terminal lysine sums to 0 even when
+charged (the terminal carboxylate cancels it), so on its own it gives a wrong call.
 """
 
 import collections
@@ -22,7 +22,7 @@ import sys
 
 
 def parse(pqr):
-    """(残基ごとの状態, LYS/LYN の ATOM 行数, 割り当てられた行数) を返す。"""
+    """Return (per-residue state, number of LYS/LYN ATOM lines, number of lines assigned)."""
     res, seen, placed = collections.OrderedDict(), 0, 0
     for l in open(pqr, errors="replace"):
         if not l.startswith(("ATOM", "HETATM")):
@@ -75,7 +75,7 @@ def main():
     for f in sorted(glob.glob(os.path.join(pqrdir, "*.pqr"))):
         pid = os.path.basename(f)[:4].upper()
         st, seen, placed = parse(f)
-        assert seen == placed, f"{pid}: LYS/LYN の行 {seen} 本中 {placed} 本しか割り当てられていない"
+        assert seen == placed, f"{pid}: only {placed} of {seen} LYS/LYN lines were assigned"
         per[pid] = {
             "charged": sum(1 for s in st if s["hz"] == 3),
             "neutral": sum(1 for s in st if s["hz"] == 2),
@@ -85,12 +85,12 @@ def main():
             "named_LYN": sum(1 for s in st if s["name"] == "LYN"),
             "atoms": sum(s["n"] for s in st),
         }
-    print(f"取りこぼし検算: {len(per)} 本すべてで LYS/LYN の ATOM 行を全数割り当て済み\n")
+    print(f"Miss cross-check: every LYS/LYN ATOM line assigned in all {len(per)} structures\n")
 
-    print("=== 層ごと ===")
+    print("=== By stratum ===")
     print(
-        f"{'層':<11}{'重み':>7}{'本':>4}{'LYS 計':>8}{'荷電':>6}{'中性':>6}{'不完全':>7}"
-        f"{'中性率/残基':>12}{'中性を含む構造':>14}"
+        f"{'stratum':<11}{'weight':>7}{'n':>4}{'LYS tot':>8}{'chg':>6}{'neu':>6}{'broken':>7}"
+        f"{'neutral/res':>12}{'struct w/ neu':>14}"
     )
     wr_res = wr_str = 0.0
     agg = collections.Counter()
@@ -119,29 +119,29 @@ def main():
     n = len(per)
     lo, hi = wilson(agg["neutral"], agg["total"])
     lo2, hi2 = wilson(nstr_all, n)
-    print(f"\n単純合計: {n} 本、LYS/LYN {agg['total']} 残基")
-    print(f"  荷電 {agg['charged']}、中性 {agg['neutral']}、側鎖が不完全 {agg['broken']}")
+    print(f"\nUnweighted total: {n} structures, {agg['total']} LYS/LYN residues")
+    print(f"  charged {agg['charged']}, neutral {agg['neutral']}, incomplete side chain {agg['broken']}")
     print(
-        f"  中性率（残基あたり）{agg['neutral'] / agg['total'] * 100:.2f}%  Wilson 95% {lo * 100:.2f}–{hi * 100:.2f}%"
+        f"  neutral fraction/res {agg['neutral'] / agg['total'] * 100:.2f}%  Wilson 95% {lo * 100:.2f}-{hi * 100:.2f}%"
     )
     print(
-        f"  中性を 1 本以上含む構造 {nstr_all}/{n} = {nstr_all / n * 100:.1f}%  "
-        f"Wilson 95% {lo2 * 100:.1f}–{hi2 * 100:.1f}%"
+        f"  structures with 1 or more neutral {nstr_all}/{n} = {nstr_all / n * 100:.1f}%  "
+        f"Wilson 95% {lo2 * 100:.1f}-{hi2 * 100:.1f}%"
     )
-    print(f"pool_size で重み付けした母集団推定: 残基あたり {wr_res * 100:.2f}%、構造あたり {wr_str * 100:.1f}%")
+    print(f"pool_size-weighted population estimate: {wr_res * 100:.2f}% per residue, {wr_str * 100:.1f}% per structure")
     print(
-        f"\n中性リジンのうち LYS の名前のまま: {agg['neutral_named_LYS']}/{agg['neutral']}、"
-        f"LYN と命名された残基: {agg['named_LYN']}"
+        f"\nNeutral lysines still named LYS: {agg['neutral_named_LYS']}/{agg['neutral']}, "
+        f"residues named LYN: {agg['named_LYN']}"
     )
 
-    print("\n=== 中性または不完全を含む構造 ===")
+    print("\n=== Structures containing a neutral or incomplete residue ===")
     for p in sorted(per):
         d = per[p]
         if d["neutral"] or d["broken"]:
             print(
-                f"  {p} ({man[p]['stratum']:<10}) LYS 計 {d['total']:>3}: "
-                f"荷電 {d['charged']:>3}、中性 {d['neutral']:>2}"
-                f"（LYS の名前のまま {d['neutral_named_LYS']}）、不完全 {d['broken']:>2}"
+                f"  {p} ({man[p]['stratum']:<10}) LYS total {d['total']:>3}: "
+                f"charged {d['charged']:>3}, neutral {d['neutral']:>2}"
+                f" (still named LYS {d['neutral_named_LYS']}), incomplete {d['broken']:>2}"
             )
 
 
