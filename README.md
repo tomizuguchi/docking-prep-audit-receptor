@@ -132,7 +132,8 @@ prof100.csv            features of the inputs
 titr_none.csv          titration states
 arms_diff_3way.csv     residues whose state moved, with the three heteroatom conditions compared
 tool_diff.csv          residues on which Meeko and PDB2PQR assign different formal charges
-altloc_diff.csv        the difference the altloc setting makes
+altloc_diff.csv        the difference the altloc setting makes; charges and coordinates are
+                       reported separately, and identical_charges does not mean the files agree
 field_diff.csv         difference in electrostatic potential on the contact surface, 96 structures
 provenance.csv         which directory was built from what
 ```
