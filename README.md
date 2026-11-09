@@ -126,6 +126,9 @@ obtain the same 100 structures that were measured, use `fetch_manifest.py`.
 
 ```
 full100_manifest.csv   stratum, resolution, draw order and seed for the 100 structures
+full100_query.json     the per-stratum search queries, the seed, and the exclusion rule
+full100_excluded.csv   the 74 identifiers excluded for falling in more than one stratum
+full100_failed.csv     the 4 identifiers that returned HTTP 404 and were replaced from the next ranks
 full100_sha256.txt     sha256 of the 100 PDB files as fetched
 prepared_sha256.txt    sha256 of the 870 prepared intermediate files
 prof100.csv            features of the inputs

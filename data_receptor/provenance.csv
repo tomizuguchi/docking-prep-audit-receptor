@@ -1,5 +1,5 @@
 dir,role,input_dir,tool,verified,note
-full100,source,-,RCSB fetch,-,The 100 PDB files as fetched. Fetched on the machine with network access. The directory also carries 4 macOS sidecar files (._*) among its 104 entries.
+full100,source,-,RCSB fetch,-,"The 100 PDB files as fetched. Fetched on the machine with network access. The directory also carries 4 macOS sidecar files (._*) among its 104 entries. The search that selected them is recorded in full100_query.json; the 74 identifiers excluded for falling in more than one stratum are in full100_excluded.csv, and the 4 that returned HTTP 404 and were replaced are in full100_failed.csv."
 in_hetall,input,full100,make_inputs.py,byte-identical on rebuild with make_inputs.py (100 files),Heavy atoms plus every HETATM record (ligands and water).
 in_nowat,input,full100,make_inputs.py,byte-identical on rebuild with make_inputs.py (100 files),Heavy atoms plus the HETATM records other than water (water alone removed).
 recept,input,full100,make_inputs.py,byte-identical on rebuild with make_inputs.py (100 files),Heavy atoms only (both water and ligands removed).

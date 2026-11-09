@@ -1,0 +1,339 @@
+{
+  "seed": 20261108,
+  "dedup90": false,
+  "endpoint": "https://search.rcsb.org/rcsbsearch/v2/query",
+  "exclusion_rule": "resolution_combined is an array attribute, so some entries match several strata. IDs that appeared in 2 or more strata were excluded from all strata (excluded.csv). The population of each stratum is the count after exclusion, which is pool_size in manifest.csv.",
+  "n_excluded": 74,
+  "strata": [
+    {
+      "name": "A_le1.5",
+      "lo": 0.0,
+      "hi": 1.5,
+      "query": {
+        "query": {
+          "type": "group",
+          "logical_operator": "and",
+          "nodes": [
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "exptl.method",
+                "operator": "exact_match",
+                "value": "X-RAY DIFFRACTION"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.selected_polymer_entity_types",
+                "operator": "exact_match",
+                "value": "Protein (only)"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.deposited_polymer_entity_instance_count",
+                "operator": "equals",
+                "value": 1
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.resolution_combined",
+                "operator": "range",
+                "value": {
+                  "from": 0.0,
+                  "include_lower": true,
+                  "to": 1.5,
+                  "include_upper": false
+                }
+              }
+            }
+          ]
+        },
+        "return_type": "entry",
+        "request_options": {
+          "paginate": {
+            "start": 0,
+            "rows": 10000
+          },
+          "results_content_type": [
+            "experimental"
+          ]
+        }
+      },
+      "search_total": 13453,
+      "pool_after_exclusion": 13423
+    },
+    {
+      "name": "B_1.5-2.0",
+      "lo": 1.5,
+      "hi": 2.0,
+      "query": {
+        "query": {
+          "type": "group",
+          "logical_operator": "and",
+          "nodes": [
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "exptl.method",
+                "operator": "exact_match",
+                "value": "X-RAY DIFFRACTION"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.selected_polymer_entity_types",
+                "operator": "exact_match",
+                "value": "Protein (only)"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.deposited_polymer_entity_instance_count",
+                "operator": "equals",
+                "value": 1
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.resolution_combined",
+                "operator": "range",
+                "value": {
+                  "from": 1.5,
+                  "include_lower": true,
+                  "to": 2.0,
+                  "include_upper": false
+                }
+              }
+            }
+          ]
+        },
+        "return_type": "entry",
+        "request_options": {
+          "paginate": {
+            "start": 0,
+            "rows": 10000
+          },
+          "results_content_type": [
+            "experimental"
+          ]
+        }
+      },
+      "search_total": 28815,
+      "pool_after_exclusion": 28755
+    },
+    {
+      "name": "C_2.0-2.5",
+      "lo": 2.0,
+      "hi": 2.5,
+      "query": {
+        "query": {
+          "type": "group",
+          "logical_operator": "and",
+          "nodes": [
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "exptl.method",
+                "operator": "exact_match",
+                "value": "X-RAY DIFFRACTION"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.selected_polymer_entity_types",
+                "operator": "exact_match",
+                "value": "Protein (only)"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.deposited_polymer_entity_instance_count",
+                "operator": "equals",
+                "value": 1
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.resolution_combined",
+                "operator": "range",
+                "value": {
+                  "from": 2.0,
+                  "include_lower": true,
+                  "to": 2.5,
+                  "include_upper": false
+                }
+              }
+            }
+          ]
+        },
+        "return_type": "entry",
+        "request_options": {
+          "paginate": {
+            "start": 0,
+            "rows": 10000
+          },
+          "results_content_type": [
+            "experimental"
+          ]
+        }
+      },
+      "search_total": 18037,
+      "pool_after_exclusion": 17989
+    },
+    {
+      "name": "D_2.5-3.0",
+      "lo": 2.5,
+      "hi": 3.0,
+      "query": {
+        "query": {
+          "type": "group",
+          "logical_operator": "and",
+          "nodes": [
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "exptl.method",
+                "operator": "exact_match",
+                "value": "X-RAY DIFFRACTION"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.selected_polymer_entity_types",
+                "operator": "exact_match",
+                "value": "Protein (only)"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.deposited_polymer_entity_instance_count",
+                "operator": "equals",
+                "value": 1
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.resolution_combined",
+                "operator": "range",
+                "value": {
+                  "from": 2.5,
+                  "include_lower": true,
+                  "to": 3.0,
+                  "include_upper": false
+                }
+              }
+            }
+          ]
+        },
+        "return_type": "entry",
+        "request_options": {
+          "paginate": {
+            "start": 0,
+            "rows": 10000
+          },
+          "results_content_type": [
+            "experimental"
+          ]
+        }
+      },
+      "search_total": 6942,
+      "pool_after_exclusion": 6932
+    },
+    {
+      "name": "E_ge3.0",
+      "lo": 3.0,
+      "hi": 9.9,
+      "query": {
+        "query": {
+          "type": "group",
+          "logical_operator": "and",
+          "nodes": [
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "exptl.method",
+                "operator": "exact_match",
+                "value": "X-RAY DIFFRACTION"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.selected_polymer_entity_types",
+                "operator": "exact_match",
+                "value": "Protein (only)"
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.deposited_polymer_entity_instance_count",
+                "operator": "equals",
+                "value": 1
+              }
+            },
+            {
+              "type": "terminal",
+              "service": "text",
+              "parameters": {
+                "attribute": "rcsb_entry_info.resolution_combined",
+                "operator": "range",
+                "value": {
+                  "from": 3.0,
+                  "include_lower": true,
+                  "to": 9.9,
+                  "include_upper": false
+                }
+              }
+            }
+          ]
+        },
+        "return_type": "entry",
+        "request_options": {
+          "paginate": {
+            "start": 0,
+            "rows": 10000
+          },
+          "results_content_type": [
+            "experimental"
+          ]
+        }
+      },
+      "search_total": 2070,
+      "pool_after_exclusion": 2070
+    }
+  ]
+}
