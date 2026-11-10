@@ -63,7 +63,11 @@ def lys_states(pqr):
 
 
 def main():
+    if len(sys.argv) < 3 or sys.argv[1] in ("-h", "--help"):
+        sys.exit(__doc__)
     pdbdir, outdir = sys.argv[1], sys.argv[2]
+    if not glob.glob(os.path.join(pdbdir, "*.pdb")):
+        sys.exit(f"no *.pdb in {pdbdir}")
     os.makedirs(outdir, exist_ok=True)
     rows, fails = [], []
     files = sorted(glob.glob(os.path.join(pdbdir, "*.pdb")))

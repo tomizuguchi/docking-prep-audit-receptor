@@ -1,0 +1,27 @@
+regenerated/tool_diff.csv: 137 rows selected
+
+distance to the metal  92 residues
+  median 5.21 A   min 1.80   max 69.82
+  under 2.6 A 32 cases (35%)
+  under    4 A  36 cases ( 39%)
+  under    6 A  48 cases ( 52%)
+  under   10 A  53 cases ( 58%)
+
+distance to the HETATM other than water  127 residues
+  median 6.30 A   min 1.41   max 69.82
+  under 2.6 A 35 cases (28%)
+  under    4 A  50 cases ( 39%)
+  under    6 A  63 cases ( 50%)
+  under   10 A  81 cases ( 64%)
+
+Breakdown of the atoms (the titratable atom nearest the metal):
+  OD2   15
+  NE2   15
+  OE2   14
+  OE1   13
+  NZ    13
+  OD1   11
+  ND1   7
+  SG    4
+
+-> regenerated/proximity_tools.csv

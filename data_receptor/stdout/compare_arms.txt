@@ -1,0 +1,29 @@
+Compared 97 structures (residue keys match in all structures)
+  Note: no chain ID in the pqr for 64/64 rows. PDB2PQR drops chains by default (--keep-chain keeps them)
+  No duplicate atom names. No residue merging occurred
+Of 10288 titratable residues, 64 do not share the same state across the 3 conditions (0.62%)
+
+=== Breakdown of changes (by residue type) ===
+base        water removal      ligand removal  total
+ASP                     0                  26     26
+HIS                     0                  20     20
+GLU                     0                  14     14
+LYS                     0                   2      2
+CYS                     0                   2      2
+total                   0                  64     64
+
+Structures with 1 or more residues that change state 34/97 = 35%
+
+=== From which state to which state (top) ===
+  ASP: charged- -> neutral   19 residues
+  HIS: HID -> HIP+   13 residues
+  GLU: charged- -> neutral   10 residues
+  ASP: neutral -> charged-   7 residues
+  HIS: HIP+ -> HID   5 residues
+  GLU: neutral -> charged-   4 residues
+  LYS: neutral -> charged+   2 residues
+  CYS: thiolate- -> neutral-SH   2 residues
+  HIS: HIE -> HIP+   1 residues
+  HIS: HIP+ -> HIE   1 residues
+
+-> regenerated/arms_diff_3way.csv

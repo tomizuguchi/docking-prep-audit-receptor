@@ -1,0 +1,39 @@
+1T5S: 217 residues checked, 0 named otherwise than their state
+    ASP charged-    -> ASP  x48
+    ASP neutral     -> ASH  x2
+    CYS neutral-SH  -> CYS  x24
+    GLU charged-    -> GLU  x75
+    GLU neutral     -> GLH  x3
+    HIS HID         -> HID  x9
+    HIS HIE         -> HIE  x3
+    LYS charged+    -> LYS  x51
+    LYS neutral     -> LYN  x2
+3DX2: 221 residues checked, 0 named otherwise than their state
+    ASP charged-    -> ASP  x61
+    ASP neutral     -> ASH  x2
+    CYS disulfide   -> CYX  x10
+    CYS neutral-SH  -> CYS  x1
+    GLU charged-    -> GLU  x51
+    GLU neutral     -> GLH  x1
+    HIS HID         -> HID  x33
+    HIS HIE         -> HIE  x8
+    HIS HIP+        -> HIP  x3
+    LYS charged+    -> LYS  x48
+    LYS neutral     -> LYN  x3
+1EA7: 40 residues checked, 0 named otherwise than their state
+    ASP charged-    -> ASP  x19
+    CYS disulfide   -> CYX  x2
+    GLU charged-    -> GLU  x6
+    HIS HID         -> HID  x1
+    HIS HIE         -> HIE  x3
+    HIS HIP+        -> HIP  x1
+    LYS charged+    -> LYS  x8
+4NV6: 30 residues checked, 0 named otherwise than their state
+    ASP charged-    -> ASP  x5
+    CYS disulfide   -> CYX  x4
+    CYS neutral-SH  -> CYS  x2
+    CYS thiolate-   -> CYM  x1
+    GLU charged-    -> GLU  x10
+    HIS HID         -> HID  x3
+    HIS HIE         -> HIE  x1
+    LYS charged+    -> LYS  x4

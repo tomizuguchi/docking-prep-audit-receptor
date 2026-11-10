@@ -1,5 +1,7 @@
 # Needed by the analysis, which rebuilds the CSVs in data_receptor/
-numpy
+# (classify_titr.py, compare_arms.py, check_ffout.py and measure_field.py).
+# The measurements were made with numpy 2.5.3 under Python 3.13.
+numpy>=2
 
 # ---------------------------------------------------------------------------
 # Reproducing the preparation itself needs these as well.

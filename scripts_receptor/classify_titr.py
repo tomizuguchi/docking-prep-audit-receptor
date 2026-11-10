@@ -4,7 +4,7 @@
   python3 classify_titr.py <pqrdir> [out.csv]
 
 Why the residue name is not trusted: PDB2PQR leaves the name as LYS even when it assigns the LYN
-parameters to a neutral lysine (18/18 in the 100 structures, 6/6 in the 3 HSA structures).
+parameters to a neutral lysine (18/18 in the raw files of the 100 structures).
 Read by name, not a single neutral lysine is visible. Hydrogens are read instead.
 
 Decision (AMBER hydrogen naming)
@@ -153,7 +153,11 @@ def classify(res):
 
 
 def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+        sys.exit(__doc__)
     pqrdir = sys.argv[1]
+    if not glob.glob(os.path.join(pqrdir, "*.pqr")):
+        sys.exit(f"no *.pqr in {pqrdir}")
     out = sys.argv[2] if len(sys.argv) > 2 else None
     rows = []
     for f in sorted(glob.glob(os.path.join(pqrdir, "*.pqr"))):

@@ -1,0 +1,21 @@
+97 structures, 10288 titratable residues (zero drops cross-checked)
+0 residues could not be classified
+
+=== Whether PDB2PQR reflects the state in the name ===
+base     state           count  name in pqr
+ARG      charged+         1748  ARG 1748
+ASP      charged-         1971  ASP 1971
+ASP      neutral            47  ASP 47  <- not distinguishable by name
+CYS      disulfide         142  CYS 142
+CYS      neutral-SH        383  CYS 383  <- not distinguishable by name
+CYS      thiolate-           5  CYS 5  <- not distinguishable by name
+GLU      charged-         2108  GLU 2108
+GLU      neutral            41  GLU 41  <- not distinguishable by name
+HIS      HID               655  HIS 655  <- not distinguishable by name
+HIS      HIE               173  HIS 173  <- not distinguishable by name
+HIS      HIP+               29  HIS 29  <- not distinguishable by name
+LYS      charged+         1833  LYS 1833
+LYS      neutral            16  LYS 16  <- not distinguishable by name
+TYR      neutral          1137  TYR 1137  <- not distinguishable by name
+
+-> regenerated/titr_none.csv

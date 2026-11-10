@@ -65,7 +65,11 @@ def wilson(k, n, z=1.96):
 
 
 def main():
+    if len(sys.argv) < 3 or sys.argv[1] in ("-h", "--help"):
+        sys.exit(__doc__)
     pqrdir, manfile = sys.argv[1], sys.argv[2]
+    if not glob.glob(os.path.join(pqrdir, "*.pqr")):
+        sys.exit(f"no *.pqr in {pqrdir}")
     man = {r["pdb_id"]: r for r in csv.DictReader(open(manfile))}
     STR = ["A_le1.5", "B_1.5-2.0", "C_2.0-2.5", "D_2.5-3.0", "E_ge3.0"]
     pool = {s: int(next(r["pool_size"] for r in man.values() if r["stratum"] == s)) for s in STR}

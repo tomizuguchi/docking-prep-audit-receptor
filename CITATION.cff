@@ -2,18 +2,20 @@ cff-version: 1.2.0
 message: "If you use this deposit, please cite it as below."
 title: "Scripts and measurements for an audit of receptor preparation in molecular docking"
 abstract: >-
-  Scripts and complete measurement tables for an audit of the receptor
-  preparation steps that precede molecular docking, on a resolution-stratified
-  sample of 100 single-chain protein crystal structures from the RCSB Protein
-  Data Bank. Covers the order in which heteroatoms are removed, the choice
-  between PDB2PQR and Meeko, Meeko's bad-residue flag, and the default altloc
-  setting, together with the resulting titration states, tool disagreements
-  and surface electrostatic potentials.
+  Scripts and measurement tables for an audit of the receptor preparation
+  steps that precede molecular docking, on a resolution-stratified sample of
+  100 single-chain protein crystal structures from the RCSB Protein Data Bank.
+  Covers whether the ligand is present when protonation states are assigned,
+  the choice between PDB2PQR and Meeko, the residues deleted by Meeko's
+  bad-residue flag, and the default altloc setting, together with the
+  resulting titration states, tool disagreements, surface electrostatic
+  potentials, and a validator for the input file.
 type: dataset
-license: MIT
-license-url: "https://opensource.org/licenses/MIT"
+license:
+  - MIT
+  - CC-BY-4.0
 version: "1.0.0"
-date-released: "2026-11-09"
+date-released: "2026-11-10"
 
 authors:
   - family-names: "Mizuguchi"
@@ -50,7 +52,7 @@ keywords:
 # ---------------------------------------------------------------------------
 
 notes: >-
-  The software, the 14 scripts in scripts_receptor/, is under the MIT License.
-  The data and prose, data_receptor/, README.md and environment.md, are under
-  CC BY 4.0. See LICENSE and LICENSE-DATA. The companion audit of
+  The software, everything in scripts_receptor/, is under the MIT License.
+  The data and prose, data_receptor/, README.md, environment.md and the
+  metadata files, are under CC BY 4.0. See LICENSE and LICENSE-DATA. The companion audit of
   partial-charge assignment for ligands is a separate deposit.

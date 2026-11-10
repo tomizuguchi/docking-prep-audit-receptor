@@ -1,0 +1,28 @@
+struct  same input same pdbqt  missing  q/type differ  extra atoms
+1FAJ          True       True        0              0            0
+1FHA         False      False        0              0            3
+1TSV         False      False        0              0           22
+2QT4          True       True        0              0            0
+3DOJ         False      False        0              0            1
+3I6H         False      False        0              0            1
+3TPO          True       True        0              0            0
+3V4W          True       True        0              0            0
+4LYZ          True       True        0              0            0
+4NYK         False      False        0              0            1
+4XEH          True       True        0              0            0
+5DOE         False      False        0              0            1
+5KCA         False      False        0              0            1
+5KUC          True       True        0              0            0
+5P7Z          True       True        0              0            0
+6AMN          True       True        0              0            0
+7BQI          True       True        0              0            0
+7IPV          True       True        0              0            0
+9BNY          True       True        0              0            0
+9L7L          True       True        0              0            0
+9YAK          True       True        0              0            0
+
+21 structures completed under both inputs
+  identical input files (no ligand in the structure): 14
+  input files differ (a ligand is present): 7  1FHA, 1TSV, 3DOJ, 3I6H, 4NYK, 5DOE, 5KCA
+  byte-identical pdbqt files: 14
+  protein part identical in atoms, charges and atom types: 21/21

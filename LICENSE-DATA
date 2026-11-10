@@ -10,9 +10,11 @@ SCOPE
 
 This licence covers the data and the prose in this deposit.
 
-  data_receptor/        the measurement tables and the checksum listings
+  data_receptor/        the measurement tables, the checksum listings and the
+                        recorded standard output of the analysis
   README.md
   environment.md
+  CITATION.cff, .zenodo.json, requirements.txt, ruff.toml, MANIFEST.sha256, .gitignore
 
 The software is under the MIT License; see LICENSE.
 

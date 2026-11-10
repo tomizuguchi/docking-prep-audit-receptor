@@ -1,0 +1,15 @@
+96 structures
+total charge differs in 75/96, by up to 13
+  the first tool's total is the more negative in 71, the more positive in 4
+
+|difference in total charge|   structures   median RMS of dV
+  0                                 21          21.35
+  1                                 36          27.28
+  2 to 4                            29          41.15
+  5 or more                         10          83.18
+
+Spearman correlation between |difference in total charge| and RMS of dV: 0.838
+
+21 structures whose totals agree
+  RMS of dV: median 21.35, quartiles 19.20 to 23.61
+  maximum of dV: median 136.99, range 88.89 to 472.20

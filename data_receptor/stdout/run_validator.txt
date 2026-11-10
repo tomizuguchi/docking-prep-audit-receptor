@@ -1,0 +1,16 @@
+100 structures
+
+option set: default (no options)
+  non-zero exit status: 40 structures
+  structures per rule: E1 3, E2 3, I0 100, W1 44, W2 85, W3 10, W4 6, W5 37
+
+option set: altlocA (--altloc A)
+  non-zero exit status: 38 structures
+  structures per rule: E1 3, E2 1, W1 44, W2 85, W3 10, W4 6, W5 37
+
+option set: allow_bad_res (--allow-bad-res)
+  non-zero exit status: 6 structures
+    2BVM, 2CFU, 2J3Q, 3I6H, 4MLK, 7USK
+  structures per rule: E1 3, E2 3, I0 100, W1 44, W2 85, W3 10, W4 6, W5 37
+
+-> regenerated/validator_runs.csv

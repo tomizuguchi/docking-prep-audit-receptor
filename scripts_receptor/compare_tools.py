@@ -110,7 +110,13 @@ def termini(pqrfile):
 
 
 def main():
+    if len(sys.argv) < 3 or sys.argv[1] in ("-h", "--help"):
+        sys.exit(__doc__)
     mdir, pdir = sys.argv[1], sys.argv[2]
+    if not glob.glob(os.path.join(mdir, "*.pdbqt")):
+        sys.exit(f"no *.pdbqt in {mdir}")
+    if not glob.glob(os.path.join(pdir, "*.pqr")):
+        sys.exit(f"no *.pqr in {pdir}")
     out = sys.argv[3] if len(sys.argv) > 3 else None
     rows, perstruct, n_excl, n_ambiguous, n_dup = [], [], 0, 0, 0
     pids = sorted(

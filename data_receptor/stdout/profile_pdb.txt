@@ -1,0 +1,29 @@
+100 structures -> regenerated/prof100.csv
+
+number of matching structures per flag
+  F_clean_sc        63
+  F_many_inc_sc      6
+  F_inc_titr        13
+  F_gaps            46
+  F_altloc          46
+  F_altloc_onlyB    23
+  F_icode            4
+  F_neg_resnum       5
+  F_nonstd           5
+  F_bb_missing       7
+  F_bb_stub          4
+  F_atom_noA         1
+  F_atom_noA_bb      1
+  F_atom_noB         2
+  F_bb_cap           3
+  F_ssbond          25
+  F_het             78
+  F_has_H           10
+  F_multimodel       0  <- no match. Fetch additional structures with this condition
+  F_multichain       0  <- no match. Cannot occur under the search conditions (deposited_polymer_entity_instance_count == 1)
+  F_nucleic          0  <- no match. Cannot occur under the search conditions (selected_polymer_entity_types == "Protein (only)")
+  F_hires           20
+  F_lores           28
+  F_big             19
+  F_small           16
+  F_no_resol         0  <- no match. Cannot occur under the search conditions (range specified on resolution_combined)

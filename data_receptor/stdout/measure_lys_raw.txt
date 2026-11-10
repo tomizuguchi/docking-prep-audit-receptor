@@ -1,0 +1,31 @@
+Miss cross-check: every LYS/LYN ATOM line assigned in all 96 structures
+
+=== By stratum ===
+stratum     weight   n LYS tot   chg   neu broken neutral/res struct w/ neu
+A_le1.5      0.194  19     316   310     6      0       1.90%          2/19
+B_1.5-2.0    0.416  19     216   214     2      0       0.93%          2/19
+C_2.0-2.5    0.260  20     454   453     1      0       0.22%          1/20
+D_2.5-3.0    0.100  18     334   330     4      0       1.20%          3/18
+E_ge3.0      0.030  20     521   516     5      0       0.96%          4/20
+
+Unweighted total: 96 structures, 1841 LYS/LYN residues
+  charged 1823, neutral 18, incomplete side chain 0
+  neutral fraction/res 0.98%  Wilson 95% 0.62-1.54%
+  structures with 1 or more neutral 12/96 = 12.5%  Wilson 95% 7.3-20.6%
+pool_size-weighted population estimate: 0.96% per residue, 10.0% per structure
+
+Neutral lysines still named LYS: 18/18, residues named LYN: 0
+
+=== Structures containing a neutral or incomplete residue ===
+  1T5S (D_2.5-3.0 ) LYS total  53: charged  51, neutral  2 (still named LYS 2), incomplete  0
+  1TQS (A_le1.5   ) LYS total  51: charged  48, neutral  3 (still named LYS 3), incomplete  0
+  3DX2 (A_le1.5   ) LYS total  51: charged  48, neutral  3 (still named LYS 3), incomplete  0
+  3IV9 (E_ge3.0   ) LYS total  33: charged  32, neutral  1 (still named LYS 1), incomplete  0
+  3LY4 (B_1.5-2.0 ) LYS total  22: charged  21, neutral  1 (still named LYS 1), incomplete  0
+  3SB0 (C_2.0-2.5 ) LYS total  24: charged  23, neutral  1 (still named LYS 1), incomplete  0
+  5KCA (E_ge3.0   ) LYS total  35: charged  34, neutral  1 (still named LYS 1), incomplete  0
+  6KVC (B_1.5-2.0 ) LYS total   2: charged   1, neutral  1 (still named LYS 1), incomplete  0
+  6ZHF (E_ge3.0   ) LYS total  58: charged  56, neutral  2 (still named LYS 2), incomplete  0
+  7U1B (D_2.5-3.0 ) LYS total  12: charged  11, neutral  1 (still named LYS 1), incomplete  0
+  9MEH (E_ge3.0   ) LYS total  86: charged  85, neutral  1 (still named LYS 1), incomplete  0
+  9QS1 (D_2.5-3.0 ) LYS total  35: charged  34, neutral  1 (still named LYS 1), incomplete  0

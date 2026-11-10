@@ -1,0 +1,106 @@
+[  1/100] 1BGP points  19718  dV rms   45.661  max   142.806  sum_q -2.00 / +1.00
+[  2/100] 1DP8 points  11226  dV rms   40.092  max   222.748  sum_q -5.00 / -4.00
+[  3/100] 1DQV points  22594  dV rms   18.449  max   456.635  sum_q -0.00 / +0.00
+[  4/100] 1E2X points  17528  dV rms   29.815  max   318.638  sum_q -5.00 / -4.00
+[  5/100] 1EA7 points  16465  dV rms   41.150  max   144.406  sum_q -10.00 / -8.00
+[  6/100] 1EPQ points  19308  dV rms   81.649  max   289.241  sum_q -15.00 / -10.00
+[  7/100] 1FAJ points  12491  dV rms   28.967  max   129.661  sum_q -11.00 / -10.00
+[  8/100] 1FHA points  13844  dV rms   60.257  max   544.126  sum_q -6.00 / -7.00
+[  9/100] 1G6B points   8437  dV rms   27.052  max   112.935  sum_q -19.00 / -18.00
+[ 10/100] 1I1H points  15042  dV rms   23.613  max   147.837  sum_q -2.00 / -2.00
+[ 11/100] 1JZE points   9368  dV rms   26.060  max   128.277  sum_q -4.00 / -3.00
+[ 12/100] 1KY2 points  14472  dV rms   43.366  max   309.312  sum_q -4.00 / -2.00
+[ 13/100] 1PB8 points  19843  dV rms  141.217  max   482.023  sum_q -7.00 / +3.00
+[ 14/100] 1PLK points  14312  dV rms   22.017  max   320.936  sum_q -5.00 / -5.00
+[ 15/100] 1T5S points  66253  dV rms   40.737  max   171.846  sum_q -28.00 / -24.00
+[ 16/100] 1TQS points  53345  dV rms   27.830  max   252.629  sum_q -8.00 / -7.00
+[ 17/100] 1TSV points  23070  dV rms   22.760  max   118.609  sum_q -13.00 / -12.00
+[ 18/100] 1U87 points  17381  dV rms   25.429  max   115.001  sum_q -3.00 / -2.00
+[ 19/100] 1UBG points  25923  dV rms   53.625  max   364.348  sum_q -8.00 / -4.00
+[ 20/100] 1ZPC points  17168  dV rms   31.806  max   125.468  sum_q +2.00 / +3.00
+[ 21/100] 2AT6 points  14560  dV rms   36.626  max   115.701  sum_q -2.00 / +0.00
+[ 22/100] 2BVM one of the two is missing, so skip
+[ 23/100] 2BY8 points  13729  dV rms   40.103  max   149.630  sum_q +5.00 / +7.00
+[ 24/100] 2CFU one of the two is missing, so skip
+[ 25/100] 2EI2 points  19591  dV rms   47.150  max   162.628  sum_q -15.00 / -12.00
+[ 26/100] 2INE points  20252  dV rms   22.310  max   106.842  sum_q -3.00 / -2.00
+[ 27/100] 2J3Q one of the two is missing, so skip
+[ 28/100] 2JH9 points  42270  dV rms   25.279  max   187.071  sum_q -2.00 / +0.00
+[ 29/100] 2OVF points  17669  dV rms   46.064  max   452.613  sum_q -13.00 / -13.00
+[ 30/100] 2PXC points  19384  dV rms   30.053  max   133.326  sum_q +9.00 / +10.00
+[ 31/100] 2QT4 points   8122  dV rms   27.185  max    82.648  sum_q +3.00 / +4.00
+[ 32/100] 2ZIC points  30829  dV rms   36.714  max   277.331  sum_q -24.00 / -22.00
+[ 33/100] 3AZ3 points  18498  dV rms   20.009  max   111.630  sum_q -5.00 / -4.00
+[ 34/100] 3DOJ points  20261  dV rms   24.819  max   178.671  sum_q -2.00 / -1.00
+[ 35/100] 3DX2 points  53688  dV rms   49.300  max   339.700  sum_q -10.00 / -6.00
+[ 36/100] 3FOQ points  31289  dV rms   29.072  max   300.624  sum_q -11.00 / -9.00
+[ 37/100] 3I6H points  10606  dV rms   26.159  max   121.513  sum_q +3.00 / +4.00
+[ 38/100] 3IV9 points  38764  dV rms   44.133  max   175.105  sum_q -21.00 / -18.00
+[ 39/100] 3LY4 points  16902  dV rms   27.212  max   207.273  sum_q -6.00 / -5.00
+[ 40/100] 3MFU points  21948  dV rms   18.546  max   130.817  sum_q +1.00 / +1.00
+[ 41/100] 3MWY points  53223  dV rms   28.513  max   132.128  sum_q -14.00 / -13.00
+[ 42/100] 3SB0 points  39726  dV rms   46.820  max   296.514  sum_q -24.00 / -21.00
+[ 43/100] 3SY1 points  16719  dV rms   18.150  max   125.735  sum_q -6.00 / -6.00
+[ 44/100] 3TFV points  21595  dV rms   27.351  max   127.381  sum_q -11.00 / -10.00
+[ 45/100] 3TPO points  28028  dV rms   21.346  max   139.800  sum_q -6.00 / -6.00
+[ 46/100] 3UMX points  18901  dV rms   32.809  max   472.204  sum_q -10.00 / -10.00
+[ 47/100] 3V4W points  11041  dV rms   29.756  max   138.091  sum_q -3.00 / -3.00
+[ 48/100] 3VJO points  22464  dV rms   18.357  max   123.911  sum_q -6.00 / -6.00
+[ 49/100] 4ASD points  22961  dV rms   19.639  max   128.023  sum_q -1.00 / -1.00
+[ 50/100] 4EDT points  23473  dV rms   30.713  max   425.298  sum_q -6.00 / -6.00
+[ 51/100] 4F1T points  20208  dV rms   20.834  max   199.883  sum_q -5.00 / -4.00
+[ 52/100] 4HIY points  12027  dV rms   22.820  max   136.989  sum_q +1.00 / +1.00
+[ 53/100] 4JWK points  13350  dV rms   39.091  max   138.687  sum_q +3.00 / +5.00
+[ 54/100] 4LVP points  10924  dV rms   31.785  max   350.081  sum_q -1.00 / -2.00
+[ 55/100] 4LYZ points  10024  dV rms   27.947  max   219.277  sum_q +7.00 / +8.00
+[ 56/100] 4MLK one of the two is missing, so skip
+[ 57/100] 4NV6 points  21741  dV rms   28.127  max   133.364  sum_q -1.00 / -2.00
+[ 58/100] 4NYK points  31746  dV rms   77.719  max   426.822  sum_q -22.00 / -15.00
+[ 59/100] 4PQW points   9319  dV rms   24.415  max   106.646  sum_q -2.00 / -1.00
+[ 60/100] 4QJK points  16348  dV rms   30.608  max   125.827  sum_q -3.00 / -2.00
+[ 61/100] 4WWP points  53927  dV rms   37.794  max   237.221  sum_q -5.00 / -2.00
+[ 62/100] 4XEH points  27182  dV rms   55.438  max   241.255  sum_q -4.00 / -1.00
+[ 63/100] 5DOE points  18731  dV rms   22.479  max   135.513  sum_q -9.00 / -9.00
+[ 64/100] 5HWX points  19437  dV rms   45.382  max   150.439  sum_q +3.00 / +6.00
+[ 65/100] 5KCA points  48795  dV rms   84.198  max   444.309  sum_q -6.00 / +2.00
+[ 66/100] 5KUC points  27304  dV rms   37.019  max   474.120  sum_q -18.00 / -20.00
+[ 67/100] 5L72 points  58042  dV rms   20.096  max   149.902  sum_q -12.00 / -11.00
+[ 68/100] 5MSD points  40065  dV rms   36.838  max   190.924  sum_q -24.00 / -22.00
+[ 69/100] 5N0Z points  42104  dV rms  122.460  max   411.835  sum_q -15.00 / -4.00
+[ 70/100] 5P7Z points  18785  dV rms  184.191  max   472.979  sum_q -23.00 / -10.00
+[ 71/100] 5U61 points  20154  dV rms   62.721  max   153.497  sum_q -12.00 / -8.00
+[ 72/100] 5UES points  10700  dV rms   16.346  max    88.886  sum_q -0.00 / +0.00
+[ 73/100] 5VB3 points  19075  dV rms   33.227  max   434.062  sum_q +2.00 / +3.00
+[ 74/100] 6AMN points  27811  dV rms   35.879  max   419.095  sum_q -4.00 / -3.00
+[ 75/100] 6CHU points  16848  dV rms   43.613  max   177.304  sum_q -10.00 / -8.00
+[ 76/100] 6KVC points  19763  dV rms   21.036  max   144.616  sum_q +3.00 / +3.00
+[ 77/100] 6L77 points  17351  dV rms   20.663  max   129.422  sum_q -7.00 / -7.00
+[ 78/100] 6L7Y points  16673  dV rms   69.739  max   343.916  sum_q -3.00 / +1.00
+[ 79/100] 6RO3 points  10234  dV rms   26.717  max   140.441  sum_q +7.00 / +8.00
+[ 80/100] 6SQL points  18379  dV rms   28.840  max   125.703  sum_q -4.00 / -3.00
+[ 81/100] 6ZCC points  17255  dV rms   27.556  max   148.329  sum_q -9.00 / -9.00
+[ 82/100] 6ZHF points  59474  dV rms   34.276  max   246.489  sum_q -23.00 / -21.00
+[ 83/100] 7BQI points  14076  dV rms   24.901  max   149.429  sum_q -3.00 / -2.00
+[ 84/100] 7C47 points  22608  dV rms   69.206  max   350.001  sum_q +2.00 / +4.00
+[ 85/100] 7IMH points  12874  dV rms   20.700  max   134.657  sum_q +5.00 / +5.00
+[ 86/100] 7INV points  30281  dV rms   34.347  max   144.216  sum_q +6.00 / +8.00
+[ 87/100] 7IPV points   9747  dV rms   28.570  max   310.361  sum_q -3.00 / -2.00
+[ 88/100] 7U1B points  24006  dV rms   26.383  max   126.013  sum_q -5.00 / -4.00
+[ 89/100] 7USK points  10412  dV rms   19.201  max   111.072  sum_q -0.00 / +0.00
+[ 90/100] 7X15 points  21107  dV rms   21.426  max   134.626  sum_q -7.00 / -7.00
+[ 91/100] 7Z3J points  77335  dV rms   51.831  max   419.899  sum_q -24.00 / -19.00
+[ 92/100] 8BD8 points  15409  dV rms   86.177  max   419.558  sum_q -8.00 / -3.00
+[ 93/100] 8PAH points  15508  dV rms   33.769  max   128.948  sum_q -15.00 / -14.00
+[ 94/100] 8WKG points  21056  dV rms   42.804  max   160.340  sum_q -2.00 / +0.00
+[ 95/100] 9BNY points  19890  dV rms   34.212  max   380.940  sum_q -5.00 / -3.00
+[ 96/100] 9HO9 points  17792  dV rms   23.856  max   120.832  sum_q -1.00 / +0.00
+[ 97/100] 9L7L points  28925  dV rms   66.162  max   324.898  sum_q +6.00 / +11.00
+[ 98/100] 9MEH points 114835  dV rms   82.166  max   397.787  sum_q -67.00 / -59.00
+[ 99/100] 9QS1 points  30943  dV rms   37.068  max   147.192  sum_q +7.00 / +9.00
+[100/100] 9YAK points  20809  dV rms   24.196  max   244.939  sum_q -5.00 / -4.00
+
+96 structures
+  RMS of dV: median 30.33, quartiles 24.72-43.43, range 16.35-184.19 kcal/mol/e
+  maximum of dV: median 156.92, range 82.65-544.13
+
+-> regenerated/field_diff.csv

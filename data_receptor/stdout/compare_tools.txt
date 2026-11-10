@@ -1,0 +1,41 @@
+96 structures compared (the input files are identical, only the tool differs)
+37 terminal residues excluded (the charge sum is confounded)
+  no chain ambiguity and no merged residues
+
+=== Distribution of the formal charges Meeko assigns ===
+  ARG    1680 residues: +1 x1680  <- all residues in the same state
+  ASP    1985 residues: -1 x1985  <- all residues in the same state
+  CYS     524 residues: +0 x524  <- all residues in the same state
+  GLU    2078 residues: -1 x2078  <- all residues in the same state
+  HIS     844 residues: +0 x844  <- all residues in the same state
+  LYS    1755 residues: +1 x1755  <- all residues in the same state
+  TYR    1130 residues: +0 x1130  <- all residues in the same state
+
+137 of 9996 titratable residues differ in formal charge between the two tools (1.37%)
+
+=== Breakdown of the disagreements (Meeko value / PDB2PQR value) ===
+  ASP: Meeko -1 / PDB2PQR +0   47 residues
+  GLU: Meeko -1 / PDB2PQR +0   41 residues
+  HIS: Meeko +0 / PDB2PQR +1   29 residues
+  LYS: Meeko +1 / PDB2PQR +0   15 residues
+  CYS: Meeko +0 / PDB2PQR -1   5 residues
+
+=== Net charge of the receptor (sum over the titratable residues) ===
+  53/96 structures differ between the two tools (55%)
+  largest difference 10 units
+
+struct    Meeko   PDB2PQR   diff   disagreeing
+5N0Z        -14        -4    -10            10
+9MEH        -67       -61     -6             8
+1EPQ        -15       -11     -4             4
+5P7Z        -23       -19     -4             4
+1T5S        -27       -24     -3             7
+3DX2         -9        -6     -3             9
+3SB0        -23       -20     -3             5
+4WWP         -5        -2     -3             3
+5HWX          3         6     -3             3
+5U61        -11        -8     -3             3
+1BGP         -1         1     -2             2
+1FHA         -6        -4     -2             2
+
+-> regenerated/tool_diff.csv

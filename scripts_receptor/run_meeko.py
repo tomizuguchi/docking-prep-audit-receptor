@@ -7,7 +7,13 @@
 The default here is
   --default_altloc A -a
 These two were made the default so that 100 structures go through without a person intervening.
-Meeko's own documentation does not point to this combination.
+The pair comes from Meeko itself: when mk_prepare_receptor.py stops on a residue it cannot match or
+on alternate locations, its error message ends with
+  "(for batch processing) Use -a/--allow_bad_res to automatically remove residues
+   that do not match templates, and --default_altloc to set a default altloc variant.
+   Use these at your own risk."
+(Meeko 0.8.0; the text is in the log of every run that fails that way.) In 0.8.0 --help lists the
+flag as -x/--delete_bad_res; -a and --allow_bad_res are still accepted.
 A structure that does not pass with these does not get onto the pipeline unless a person looks
 inside it and decides --wanted_altloc. The purpose is to count how many structures are like that.
 
@@ -50,7 +56,13 @@ BASE = ["mk_prepare_receptor.py", "-p"]
 DEFAULT_EXTRA = ["--default_altloc", "A", "-a"]
 TIMEOUT = 1800
 
+# All patterns that match are joined with "|" in failure_kind. A failed download of a residue
+# definition from rcsb.org also matches unknown_residue, so those rows read
+# "template_download|unknown_residue"; template_download is what tells them from a residue that
+# is unknown with the network available.
 PATTERNS = [
+    ("template_download", r"Could not download CIF|urlopen error"),
+    ("residue_build", r"unable to build rdkit mol"),
     ("altloc_not_found", r"Requested altlocs not found"),
     ("altloc_unset", r"Either specify an altloc for each"),
     ("template_mismatch", r"did not match any template|does not match templates"),

@@ -16,6 +16,7 @@ venv/
 /in_hetall/
 /in_nowat/
 /recept/
+/pqr_raw/
 /pqr_hetall/
 /pqr_nowat/
 /pqr100r/
@@ -23,3 +24,4 @@ venv/
 /meekoA_noa/
 /meekoB/
 /meeko_nowat/
+/regenerated/

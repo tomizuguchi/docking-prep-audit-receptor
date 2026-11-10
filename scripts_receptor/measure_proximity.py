@@ -23,14 +23,22 @@ Why it is measured again
   With --legacy, the earlier "first atom only" behaviour is reported alongside.
 
 Note
-  The diff CSV has no chain column. When the same residue number is in several chains, all of the
+  The chain column of the diff CSV is not used (PDB2PQR drops the chain from the pqr by default, so it
+  is empty in the deposited tables). When the same residue number is in several chains, all of the
   chains are measured and the minimum is taken, and how many cases were ambiguous is reported separately.
+
+  The median is the ordinary one (the mean of the two middle values for an even count). An earlier
+  version printed the upper of the two middle values, which gave 3.04 instead of 2.88 for the 52
+  distances to a metal.
+
+  <structure_dir> must contain the HETATM records: pass full100 or in_nowat, not recept.
 """
 
 import argparse
 import collections
 import csv
 import os
+import statistics
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -128,7 +136,7 @@ def main():
         n = len(vals)
         within = sum(1 for v in vals if v < cut)
         print(f"\n{label}  {n} residues")
-        print(f"  median {vals[n // 2]:.2f} A   min {vals[0]:.2f}   max {vals[-1]:.2f}")
+        print(f"  median {statistics.median(vals):.2f} A   min {vals[0]:.2f}   max {vals[-1]:.2f}")
         print(f"  under {cut} A {within} cases ({100 * within / n:.0f}%)")
         for t in (4.0, 6.0, 10.0):
             print(

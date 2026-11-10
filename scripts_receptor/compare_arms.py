@@ -38,7 +38,12 @@ def states(pqr):
 
 
 def main():
+    if len(sys.argv) < 4 or sys.argv[1] in ("-h", "--help"):
+        sys.exit(__doc__)
     dirs = sys.argv[1:4]
+    for d in dirs:
+        if not glob.glob(os.path.join(d, "*.pqr")):
+            sys.exit(f"no *.pqr in {d}")
     out = sys.argv[4] if len(sys.argv) > 4 else None
     labels = ["hetall", "nowat", "none"]
     pids = sorted(

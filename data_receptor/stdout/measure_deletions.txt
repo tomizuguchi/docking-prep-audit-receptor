@@ -1,0 +1,29 @@
+100 inputs, Meeko completed on 99
+residues deleted: 306 in 38/99 structures
+  largest: 28 in 8BD8 (14.4% of its 194 residues)
+  by residue type: LYS 77, GLU 55, ARG 52, ASP 18, GLN 17, LEU 13, SER 12, PHE 9, ASN 8, VAL 7, MET 7, HIS 6, ILE 6, THR 5, TYR 4, CYS 3, ALA 3, PRO 2, TRP 1, GLY 1
+
+charged residues (ARG, LYS, ASP, GLU) among all residues of the 99 inputs: 8131/35351 = 23.0%
+charged residues among the deleted: 202/306 = 66.0%   enrichment 2.87
+  LYS + ARG deleted 129, ASP + GLU deleted 73
+
+formal charge of the receptor moves in 30/99 structures
+  q_deleted = charge of the deleted residues; the receptor moves by the opposite amount
+    1PB8  q_deleted +9   receptor -9
+    5P7Z  q_deleted +8   receptor -8
+    5KCA  q_deleted +7   receptor -7
+    4NYK  q_deleted +5   receptor -5
+    8BD8  q_deleted +5   receptor -5
+  receptor moves towards negative in 24, towards positive in 6
+
+incomplete side chains in the inputs (prof100.csv): 288 in 37 structures
+  structures in which the number deleted equals incomplete_sc: 33/38
+  differs in: 4F1T +3, 4LYZ +3, 4NYK +1, 5P7Z +7, 9BNY +4
+  sum of the differences: +18
+
+without the flag: 61 complete, 39 fail
+  fail without the flag and complete with it: 38
+  same set as the structures with deletions: True
+  fail with the flag as well: ['4MLK']
+
+-> regenerated/deleted_residues.csv

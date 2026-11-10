@@ -1,0 +1,42 @@
+meekoA: 100 logs, 99 completed, 1 without output
+  completed with an 'Ignored due to allow_bad_res' line: 38 structures, 306 residues listed
+  completed runs whose log mentions alternate locations: 0
+  without output, alternate locations: 1
+  failed runs whose message recommends -a and --default_altloc for batch processing: 1
+  runs that attempted a download: 0
+  structures with an incomplete side chain: 37, of which failed 0; with none: 63, of which completed 62
+
+meekoB: 100 logs, 98 completed, 2 without output
+  completed with an 'Ignored due to allow_bad_res' line: 38 structures, 306 residues listed
+  completed runs whose log mentions alternate locations: 0
+  without output, alternate locations: 2
+  failed runs whose message recommends -a and --default_altloc for batch processing: 2
+  runs that attempted a download: 0
+  structures with an incomplete side chain: 37, of which failed 0; with none: 63, of which completed 61
+
+meekoA_noa: 100 logs, 61 completed, 39 without output
+  completed runs whose log mentions alternate locations: 0
+  without output, template matching failed, excess inter-residue bond reported: 32
+  without output, template matching failed, no excess bond reported: 6
+  without output, alternate locations: 1
+  failed runs whose message recommends -a and --default_altloc for batch processing: 39
+  runs that attempted a download: 0
+  32 failed runs report excess inter-residue bonds; against incomplete_sc:
+    equal 17, fewer reported 10 ({-2: 2, -1: 8}), more reported 5 ({1: 1, 3: 3, 7: 1})
+    more reported in: 4F1T +3, 4LYZ +3, 4NYK +1, 5P7Z +7, 9BNY +3
+  structures with an incomplete side chain: 37, of which failed 37; with none: 63, of which completed 61
+
+meeko_nowat: 100 logs, 21 completed, 79 without output
+  completed with an 'Ignored due to allow_bad_res' line: 13 structures, 124 residues listed
+  completed runs whose log mentions alternate locations: 0
+  without output, download of a residue definition attempted: 77
+  without output, alternate locations: 1
+  without output, residue could not be built (BEF): 1
+  failed runs whose message recommends -a and --default_altloc for batch processing: 1
+  runs that attempted a download: 77
+    distinct residue codes without a template: 97; most frequent (structures): SO4 15, NA 6, GOL 5, MSE 4, HEM 3, ACT 3
+    residues without a template per structure: 1 in 32, 2 in 16, 3 in 8, 4 in 9, 5 in 4, 6 in 3, 9 in 1, 10 in 2, 12 in 1, 35 in 1
+    the download that failed, by residue code: 62 distinct codes (which one is tried first is not fixed between runs)
+  structures with an incomplete side chain: 37, of which failed 25; with none: 63, of which completed 9
+
+-> regenerated/meeko_runs.csv
